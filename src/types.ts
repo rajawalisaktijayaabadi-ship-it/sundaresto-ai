@@ -26,7 +26,7 @@ export interface UserAccount {
   username: string;
   passwordHash: string;
   pin?: string;
-  role: "OWNER" | "MANAGER" | "SUPERVISOR" | "CASHIER" | "WAITER" | "KITCHEN";
+  role: "DEVELOPER" | "OWNER" | "MANAGER" | "SUPERVISOR" | "CASHIER" | "WAITER" | "KITCHEN";
   outletId: string;
   status: "Aktif" | "Nonaktif";
   email?: string;

@@ -1402,6 +1402,20 @@ export const INITIAL_COMMISSIONS: CommissionRecord[] = [
 
 export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
   {
+    id: "usr-dev",
+    fullName: "Developer Super Admin",
+    username: "developer",
+    passwordHash: "dev123",
+    pin: "9999",
+    role: "DEVELOPER",
+    outletId: "ALL",
+    status: "Aktif",
+    email: "dev.admin@saungpasundan.id",
+    phone: "0811-9999-0000",
+    lastLogin: "2026-08-09 17:15 WIB",
+    createdAt: "2025-01-01"
+  },
+  {
     id: "usr-1",
     fullName: "H. Asep Sunandar",
     username: "owner",

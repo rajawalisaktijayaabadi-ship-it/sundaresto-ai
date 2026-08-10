@@ -114,13 +114,18 @@ export const AiPilotModule: React.FC<AiPilotModuleProps> = ({
     };
 
     try {
+      const savedKey = localStorage.getItem("custom_gemini_api_key") || "";
       const res = await fetch("/api/ai/copilot", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-gemini-api-key": savedKey
+        },
         body: JSON.stringify({
           mode: activeTab,
           prompt: promptText,
-          context: contextData
+          context: contextData,
+          customApiKey: savedKey
         })
       });
       const json = await res.json();

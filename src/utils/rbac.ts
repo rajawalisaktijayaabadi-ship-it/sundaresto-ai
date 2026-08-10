@@ -1,6 +1,6 @@
 import { ActiveTab } from "../components/HeaderNav";
 
-export type RbacRole = "OWNER" | "MANAGER" | "SUPERVISOR" | "CASHIER" | "WAITER" | "KITCHEN";
+export type RbacRole = "DEVELOPER" | "OWNER" | "MANAGER" | "SUPERVISOR" | "CASHIER" | "WAITER" | "KITCHEN";
 
 export interface RoleDefinition {
   id: RbacRole;
@@ -12,6 +12,31 @@ export interface RoleDefinition {
 }
 
 export const RBAC_ROLES: Record<RbacRole, RoleDefinition> = {
+  DEVELOPER: {
+    id: "DEVELOPER",
+    label: "DEVELOPER / SUPER ADMIN (Akses Root & API Key)",
+    badgeColor: "bg-purple-600 text-white border-purple-400 font-extrabold shadow-md",
+    description: "Akses Super Admin & Developer: Root System, Manual Gemini API Key Management, License Generator, Debug Logs, & Full Access.",
+    allowedTabs: [
+      "dashboard",
+      "pos",
+      "orders",
+      "saung",
+      "kds",
+      "recipe",
+      "inventory",
+      "purchasing",
+      "crm",
+      "reservation",
+      "employee",
+      "outlet",
+      "aipilot",
+      "reports",
+      "license",
+      "settings"
+    ],
+    permissionsList: ["Super Admin Root", "Developer Console", "Gemini API Key Config", "All Outlets Access", "System Logs"]
+  },
   OWNER: {
     id: "OWNER",
     label: "OWNER (Pemilik Resto)",

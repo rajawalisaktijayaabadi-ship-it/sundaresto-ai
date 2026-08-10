@@ -56,7 +56,69 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
   currentOutlet,
   onUpdateOutlet
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<"accounts" | "license" | "receipt">("accounts");
+  const [activeSubTab, setActiveSubTab] = useState<"accounts" | "developer" | "license" | "receipt">("accounts");
+
+  // Developer & Gemini API Key Settings State
+  const [geminiApiKeyInput, setGeminiApiKeyInput] = useState<string>(() => {
+    return localStorage.getItem("custom_gemini_api_key") || "";
+  });
+  const [showGeminiKeyText, setShowGeminiKeyText] = useState(false);
+  const [isTestingKey, setIsTestingKey] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string; aiResponse?: string } | null>(null);
+
+  const handleSaveGeminiKey = () => {
+    const trimmed = geminiApiKeyInput.trim();
+    if (!trimmed) {
+      localStorage.removeItem("custom_gemini_api_key");
+      showToast("API Key Gemini telah dihapus dari local storage.");
+      setTestResult(null);
+      return;
+    }
+    localStorage.setItem("custom_gemini_api_key", trimmed);
+    showToast("✓ API Key Gemini berhasil disimpan secara manual!");
+    setTestResult(null);
+  };
+
+  const handleClearGeminiKey = () => {
+    localStorage.removeItem("custom_gemini_api_key");
+    setGeminiApiKeyInput("");
+    showToast("API Key Gemini telah dihapus dari local storage.");
+    setTestResult(null);
+  };
+
+  const handleTestGeminiKey = async () => {
+    const keyToTest = geminiApiKeyInput.trim() || localStorage.getItem("custom_gemini_api_key") || "";
+    if (!keyToTest) {
+      setTestResult({
+        success: false,
+        message: "Silakan masukkan API Key Gemini terlebih dahulu sebelum melakukan tes."
+      });
+      return;
+    }
+
+    setIsTestingKey(true);
+    setTestResult(null);
+
+    try {
+      const res = await fetch("/api/test-gemini-key", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-gemini-api-key": keyToTest
+        },
+        body: JSON.stringify({ customApiKey: keyToTest })
+      });
+      const data = await res.json();
+      setTestResult(data);
+    } catch (err: any) {
+      setTestResult({
+        success: false,
+        message: `Gagal menghubungi server tes: ${err.message || err}`
+      });
+    } finally {
+      setIsTestingKey(false);
+    }
+  };
 
   // Account Filters & Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -262,6 +324,21 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
           </button>
 
           <button
+            onClick={() => setActiveSubTab("developer")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap ${
+              activeSubTab === "developer"
+                ? "bg-purple-600 text-white shadow-md border border-purple-400"
+                : "text-purple-300 hover:text-purple-100 bg-purple-950/40 border border-purple-900/50"
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-purple-300" />
+            <span>Developer & Gemini API</span>
+            <span className="ml-1 text-[9px] px-1.5 py-0.5 rounded-md bg-purple-500 text-white font-extrabold uppercase tracking-wide">
+              Super Admin
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveSubTab("license")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap ${
               activeSubTab === "license"
@@ -312,6 +389,7 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
                 className="w-full sm:w-auto bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-300 font-bold outline-none"
               >
                 <option value="ALL">Semua Jabatan (Role)</option>
+                <option value="DEVELOPER">Developer (Super Admin Root)</option>
                 <option value="OWNER">Owner (Pemilik)</option>
                 <option value="MANAGER">Manager</option>
                 <option value="SUPERVISOR">Supervisor</option>
@@ -450,7 +528,200 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
         </div>
       )}
 
-      {/* TAB 2: LICENSE & KEY GENERATOR */}
+      {/* TAB 2: DEVELOPER & GEMINI API KEY MANAGEMENT */}
+      {activeSubTab === "developer" && (
+        <div className="space-y-6">
+          {/* Top Developer & Super Admin Banner */}
+          <div className="bg-gradient-to-r from-purple-950/80 via-stone-900 to-amber-950/40 border border-purple-500/40 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-md bg-purple-600 text-white font-extrabold text-[10px] uppercase tracking-wider shadow-sm">
+                    SUPER ADMIN ROOT
+                  </span>
+                  <span className="text-xs font-mono text-purple-300 font-bold">Role: DEVELOPER</span>
+                </div>
+                <h3 className="font-serif font-bold text-xl text-amber-100 flex items-center gap-2">
+                  <span>Konsol Developer & Akses Root Sistem</span>
+                </h3>
+                <p className="text-xs text-stone-300 max-w-2xl">
+                  Akun Super Admin Developer memiliki tingkat wewenang penuh tanpa batas di seluruh modul, cabang outlet, generator lisensi, serta pengaturan manual API Key Gemini AI.
+                </p>
+              </div>
+
+              {/* Developer Account Badge Box */}
+              <div className="bg-stone-950/90 border border-purple-500/50 p-4 rounded-2xl space-y-2 text-xs font-mono min-w-[260px]">
+                <div className="text-[10px] font-sans font-bold text-purple-300 uppercase tracking-wider border-b border-purple-900/60 pb-1 flex justify-between items-center">
+                  <span>Kredensial Login Dev:</span>
+                  <span className="text-emerald-400 font-bold">● Status: Aktif</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-400">Username:</span>
+                  <span className="font-bold text-amber-300">developer</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-400">Password:</span>
+                  <span className="font-bold text-amber-300">dev123</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-400">PIN Kasir:</span>
+                  <span className="font-bold text-amber-300">9999</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Manual Gemini API Key Configuration Section */}
+          <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between pb-4 border-b border-stone-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-950/80 border border-purple-500/50 flex items-center justify-center text-purple-300 shadow-inner">
+                  <Key className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-lg text-amber-100 flex items-center gap-2">
+                    <span>Pengaturan Manual API Key Gemini AI</span>
+                  </h3>
+                  <p className="text-xs text-stone-400">
+                    Masukkan API Key Gemini secara manual untuk mengaktifkan fitur AI Co-Pilot & Resep Sunda AI setelah deploy.
+                  </p>
+                </div>
+              </div>
+
+              {/* Saved Status Pill */}
+              <div className="hidden sm:block">
+                {localStorage.getItem("custom_gemini_api_key") ? (
+                  <span className="px-3 py-1.5 rounded-xl bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 font-bold text-xs flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>API Key Tersimpan & Aktif</span>
+                  </span>
+                ) : (
+                  <span className="px-3 py-1.5 rounded-xl bg-amber-950/80 border border-amber-500/50 text-amber-300 font-bold text-xs flex items-center gap-1.5">
+                    <Zap className="w-4 h-4 text-amber-400" />
+                    <span>Menggunakan AI Local Fallback</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-amber-200 block mb-1.5">
+                  Input Gemini API Key (Google AI Studio):
+                </label>
+                <div className="relative">
+                  <input
+                    type={showGeminiKeyText ? "text" : "password"}
+                    value={geminiApiKeyInput}
+                    onChange={(e) => setGeminiApiKeyInput(e.target.value)}
+                    placeholder="Masukkan API Key Gemini (contoh: AIzaSy...)"
+                    className="w-full bg-stone-950 border border-stone-800 rounded-2xl pl-4 pr-10 py-3 text-sm text-stone-100 font-mono outline-none focus:border-purple-400 transition shadow-inner"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowGeminiKeyText(!showGeminiKeyText)}
+                    className="absolute right-3 top-3.5 text-stone-400 hover:text-stone-200"
+                  >
+                    {showGeminiKeyText ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-[11px] text-stone-400 mt-1">
+                  API Key ini tersimpan aman di browser (local storage) dan otomatis dikirimkan ke server saat menjalankan fitur AI.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={handleSaveGeminiKey}
+                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-stone-950 font-extrabold text-xs rounded-xl shadow-lg transition flex items-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Simpan API Key</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleTestGeminiKey}
+                  disabled={isTestingKey}
+                  className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-extrabold text-xs rounded-xl shadow-lg transition flex items-center gap-2 border border-purple-400"
+                >
+                  {isTestingKey ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4" />
+                  )}
+                  <span>{isTestingKey ? "Menguji Koneksi..." : "Tes Koneksi Gemini API"}</span>
+                </button>
+
+                {geminiApiKeyInput && (
+                  <button
+                    type="button"
+                    onClick={handleClearGeminiKey}
+                    className="px-4 py-2.5 bg-stone-800 hover:bg-rose-600 text-stone-300 hover:text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 border border-stone-700"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Hapus Key</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Test Result Display Banner */}
+              {testResult && (
+                <div
+                  className={`p-4 rounded-2xl border text-xs space-y-1.5 ${
+                    testResult.success
+                      ? "bg-emerald-950/70 border-emerald-500/60 text-emerald-200"
+                      : "bg-rose-950/70 border-rose-500/60 text-rose-200"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-bold text-sm">
+                    {testResult.success ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-rose-400" />
+                    )}
+                    <span>{testResult.message}</span>
+                  </div>
+                  {testResult.aiResponse && (
+                    <div className="bg-stone-950/80 p-3 rounded-xl border border-emerald-900 font-mono text-emerald-300 text-[11px]">
+                      Response Gemini: "{testResult.aiResponse}"
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Guide Card for Deployment */}
+          <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 shadow-2xl space-y-3">
+            <h4 className="font-serif font-bold text-sm text-amber-200 flex items-center gap-2">
+              <Shield className="w-4 h-4 text-amber-400" />
+              <span>Panduan Memasang API Key Gemini Setelah Deploy</span>
+            </h4>
+            <ol className="list-decimal list-inside space-y-1.5 text-xs text-stone-300 leading-relaxed">
+              <li>
+                Dapatkan API Key Gemini secara gratis melalui Google AI Studio: <a href="https://aistudio.google.com" target="_blank" rel="noreferrer" className="text-amber-400 underline font-mono">https://aistudio.google.com</a>.
+              </li>
+              <li>
+                Buka menu <strong className="text-white">Setting → Developer & Gemini API</strong> pada aplikasi SundaResto AI ini.
+              </li>
+              <li>
+                Tempelkan (paste) API Key pada kolom <strong className="text-amber-300">Input Gemini API Key</strong> di atas, lalu klik <strong className="text-amber-300">Simpan API Key</strong>.
+              </li>
+              <li>
+                Klik <strong className="text-purple-300">Tes Koneksi Gemini API</strong> untuk memastikan server berhasil merespon.
+              </li>
+              <li>
+                Setelah tersimpan, seluruh fitur AI seperti <strong className="text-white">AI Co-Pilot</strong>, <strong className="text-white">Resep Masakan Sunda AI</strong>, dan <strong className="text-white">Promosi Otomatis</strong> akan berjalan secara real-time menggunakan API Key Anda.
+              </li>
+            </ol>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: LICENSE & KEY GENERATOR */}
       {activeSubTab === "license" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Active License Info (6 cols) */}
@@ -787,6 +1058,7 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
                     onChange={(e) => setNewRole(e.target.value as RbacRole)}
                     className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3.5 py-2.5 text-stone-200 font-bold outline-none focus:border-amber-400"
                   >
+                    <option value="DEVELOPER">Super Admin Developer (Akses Root)</option>
                     <option value="OWNER">Owner (Akses Penuh)</option>
                     <option value="MANAGER">Manager</option>
                     <option value="SUPERVISOR">Supervisor</option>

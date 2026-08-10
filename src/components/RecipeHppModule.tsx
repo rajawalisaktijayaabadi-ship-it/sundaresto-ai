@@ -100,12 +100,17 @@ export const RecipeHppModule: React.FC<RecipeHppModuleProps> = ({
 
     setIsGeneratingRecipe(true);
     try {
+      const savedKey = localStorage.getItem("custom_gemini_api_key") || "";
       const response = await fetch("/api/ai/sunda-recipe", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-gemini-api-key": savedKey
+        },
         body: JSON.stringify({
           recipeName: promptToUse,
-          targetServings
+          targetServings,
+          customApiKey: savedKey
         })
       });
 

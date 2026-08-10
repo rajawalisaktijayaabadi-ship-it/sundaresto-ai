@@ -17,8 +17,8 @@ async function startServer() {
   app.use(express.json({ limit: "10mb" }));
 
   // Helper function to lazily get or initialize Gemini AI Client
-  function getAiClient(): GoogleGenAI | null {
-    const key = process.env.GEMINI_API_KEY;
+  function getAiClient(customKey?: string): GoogleGenAI | null {
+    const key = (customKey && customKey.trim().length > 0) ? customKey.trim() : process.env.GEMINI_API_KEY;
     if (!key || key.trim() === "" || key === "MY_GEMINI_API_KEY") {
       return null;
     }
@@ -42,8 +42,9 @@ async function startServer() {
     contents: string;
     systemInstruction?: string;
     temperature?: number;
+    customApiKey?: string;
   }): Promise<string> {
-    const client = getAiClient();
+    const client = getAiClient(params.customApiKey);
     if (!client) {
       throw new Error("GEMINI_API_KEY environment variable is not configured.");
     }
@@ -84,6 +85,35 @@ async function startServer() {
   // Health check
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", app: "SundaResto AI", time: new Date().toISOString() });
+  });
+
+  // Test Gemini API Key Endpoint
+  app.post("/api/test-gemini-key", async (req, res) => {
+    const customApiKey = (req.headers["x-gemini-api-key"] as string) || req.body?.customApiKey;
+    const client = getAiClient(customApiKey);
+    if (!client) {
+      return res.status(400).json({ success: false, message: "API Key belum dimasukkan atau kosong." });
+    }
+
+    try {
+      const responseText = await generateGeminiContentWithFallback({
+        contents: "Salam hangat untuk Saung Pasundan! Jawab singkat 'Siap! Gemini AI Aktif'.",
+        systemInstruction: "Anda adalah AI Assistant yang merespon tes koneksi.",
+        temperature: 0.1,
+        customApiKey,
+      });
+
+      return res.json({
+        success: true,
+        message: "Tes Koneksi Gemini API Berhasil!",
+        aiResponse: responseText
+      });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        message: `Gagal menghubungkan Gemini API Key: ${err.message || err}`
+      });
+    }
   });
 
   // License Validation Endpoint
@@ -162,6 +192,7 @@ async function startServer() {
   // AI Resep Masakan Sunda Generator Endpoint
   app.post("/api/ai/sunda-recipe", async (req, res) => {
     const { recipeName, targetServings = 4 } = req.body;
+    const customApiKey = (req.headers["x-gemini-api-key"] as string) || req.body?.customApiKey;
 
     if (!recipeName) {
       return res.status(400).json({ error: "Nama masakan Sunda diperlukan" });
@@ -209,7 +240,7 @@ async function startServer() {
       pairingRecommendation: "Sangat pas disandingkan dengan Es Kelapa Muda Jeruk & Kerupuk Aci khas Parahyangan."
     };
 
-    if (!getAiClient()) {
+    if (!getAiClient(customApiKey)) {
       return res.json({ success: true, isMock: true, data: fallbackRecipe });
     }
 
@@ -241,6 +272,7 @@ Kembalikan respon JSON persis berformat:
         contents: promptText,
         systemInstruction,
         temperature: 0.7,
+        customApiKey,
       });
 
       let parsedData;
@@ -271,6 +303,7 @@ Kembalikan respon JSON persis berformat:
   // AI Co-Pilot & Smart Feature Endpoint
   app.post("/api/ai/copilot", async (req, res) => {
     const { mode, prompt, context } = req.body;
+    const customApiKey = (req.headers["x-gemini-api-key"] as string) || req.body?.customApiKey;
 
     if (!prompt) {
       return res.status(400).json({ error: "Prompt parameters required" });
@@ -367,7 +400,7 @@ Kembalikan respon JSON persis berformat:
       };
     };
 
-    if (!getAiClient()) {
+    if (!getAiClient(customApiKey)) {
       // Use smart rich structured fallback if API key is not configured
       const fallback = getFallbackAIResponse(mode, prompt);
       return res.json({ success: true, isMock: true, data: fallback });
@@ -390,6 +423,7 @@ Kembalikan respon JSON persis berformat:
         contents: `Mode: ${mode}\nContext: ${JSON.stringify(context || {})}\nUser Prompt: ${prompt}`,
         systemInstruction,
         temperature: 0.7,
+        customApiKey,
       });
 
       let parsedData;
