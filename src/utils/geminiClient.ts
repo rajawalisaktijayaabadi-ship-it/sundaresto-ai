@@ -132,6 +132,185 @@ export function sanitizeSundaTitle(raw: string): string {
   return cleaned;
 }
 
+const SUNDA_IDEAS_POOL = [
+  {
+    recipeTitle: "Nasi Liwet Kastrol Pete Teri Medan",
+    sundaCategory: "Nasi & Paket Liwet",
+    originStory: "Nasi liwet khas Parahyangan dimasak dalam kastrol aluminium bersama bumbu rempah harum, pete segar, dan taburan teri medan garing.",
+    estimatedHppPerServing: 18000,
+    suggestedPricePerServing: 48000,
+    marginPercent: "62%",
+    ingredients: (s: number) => [
+      { name: "Beras Pulen Cianjur", qty: 120 * s, unit: "gram", estimatedCost: 2000 * s, note: "Pilihan beras harum Cianjur" },
+      { name: "Teri Medan Garing", qty: 30 * s, unit: "gram", estimatedCost: 3500 * s, note: "Goreng renyah garing" },
+      { name: "Pete Segar Kupas", qty: 25 * s, unit: "gram", estimatedCost: 3000 * s, note: "Aroma wangi gurih" },
+      { name: "Bawang Merah & Putih Iris", qty: 30 * s, unit: "gram", estimatedCost: 1500 * s, note: "Tumis harum awal" },
+      { name: "Daun Salam, Sereh Memar & Cabai Rawit", qty: 20 * s, unit: "gram", estimatedCost: 1500 * s, note: "Rempah komplit kastrol" }
+    ],
+    cookingSteps: [
+      { stepNumber: 1, instruction: "Cuci beras Cianjur hingga bersih, masukkan ke dalam kastrol aluminium tradisional.", durationMins: 5, chefTip: "Gunakan air bersuhu ruang dengan takaran 1.25 tinggi beras." },
+      { stepNumber: 2, instruction: "Tumis irisan bawang merah, bawang putih, daun salam, dan serai hingga harum, lalu campurkan ke beras bersama pete dan garam.", durationMins: 8, chefTip: "Bumbu tumis membuat nasi liwet gurih meresap." },
+      { stepNumber: 3, instruction: "Masak dalam kastrol bertutup di atas api sedang hingga mendidih, lalu kecilkan api hingga air meresap tuntas.", durationMins: 25, chefTip: "Jangan buka tutup kastrol saat tanak agar uap matang sempurna." },
+      { stepNumber: 4, instruction: "Taburi teri medan goreng renyah dan cabai rawit utuh di atasnya saat dihidangkan hangat.", durationMins: 2, chefTip: "Sajikan langsung dalam kastrol." }
+    ],
+    servingStyle: "Disajikan langsung di dalam kastrol aluminium hangat beralaskan daun pisang, lengkap dengan cobek sambal dadak.",
+    pairingRecommendation: "Sangat cocok disandingkan dengan Gurame Bakar Bumbu Rujak dan Es Teh Manis Serai."
+  },
+  {
+    recipeTitle: "Gurame Cobek Mangut Khas Saung",
+    sundaCategory: "Olahan Ikan",
+    originStory: "Gurame goreng renyah disiram sambal cobek jahe kencur khas Priangan yang segar pedas membakar selera.",
+    estimatedHppPerServing: 28000,
+    suggestedPricePerServing: 75000,
+    marginPercent: "62%",
+    ingredients: (s: number) => [
+      { name: "Ikan Gurame Segar (Kerat)", qty: 200 * s, unit: "gram", estimatedCost: 18000 * s, note: "Goreng garing renyah" },
+      { name: "Bumbu Cobek (Kencur, Jahe, Cabai Rawit, Bawang)", qty: 40 * s, unit: "gram", estimatedCost: 3500 * s, note: "Ulek kasar siram air panas" },
+      { name: "Jeruk Limau & Terasi Bakar", qty: 15 * s, unit: "gram", estimatedCost: 1500 * s, note: "Penyegar aroma" },
+      { name: "Lalapan Leunca, Kemangi & Timun", qty: 50 * s, unit: "gram", estimatedCost: 2000 * s, note: "Mentah segar" }
+    ],
+    cookingSteps: [
+      { stepNumber: 1, instruction: "Bersihkan ikan gurame, baluri perasan jeruk nipis, ketumbar, dan garam. Marinasi 15 menit.", durationMins: 15, chefTip: "Kerat dalam badan ikan agar garing sampai tulang." },
+      { stepNumber: 2, instruction: "Goreng ikan dalam minyak panas melimpah hingga garing keemasan.", durationMins: 12, chefTip: "Pastikan minyak sangat panas sebelum ikan dimasukkan." },
+      { stepNumber: 3, instruction: "Ulek kasar kencur, jahe, cabai rawit, bawang merah, terasi bakar, dan garam di atas cobek batu, lalu siram air panas mendidih dan perasan limau.", durationMins: 5, chefTip: "Siraman air panas menyatukan aroma kencur dan jahe segar." },
+      { stepNumber: 4, instruction: "Penyet gurame goreng di atas cobek batu bersiram bumbu.", durationMins: 2, chefTip: "Sajikan panas-panas bersama lalapan leunca." }
+    ],
+    servingStyle: "Disajikan di atas cobek batu cembung besar dengan siraman bumbu cobek wangi meresap.",
+    pairingRecommendation: "Pas disandingkan dengan Nasi Liwet Kastrol dan Es Kelapa Muda."
+  },
+  {
+    recipeTitle: "Karedok Leunca & Ulukutek Oncom",
+    sundaCategory: "Sayuran & Sup",
+    originStory: "Paduan karedok leunca renyah bumbu kencur dan ulukutek oncom Bandung tumis leunca yang gurih pedas khas saung lesehan.",
+    estimatedHppPerServing: 12000,
+    suggestedPricePerServing: 35000,
+    marginPercent: "65%",
+    ingredients: (s: number) => [
+      { name: "Leunca Segar & Oncom Bandung", qty: 150 * s, unit: "gram", estimatedCost: 5000 * s, note: "Oncom bakar haluskan" },
+      { name: "Bumbu Kencur (Kencur, Cabai Rawit, Terasi, Bawang)", qty: 30 * s, unit: "gram", estimatedCost: 2500 * s, note: "Ulek harum dadakan" },
+      { name: "Daun Kemangi & Kacang Panjang", qty: 40 * s, unit: "gram", estimatedCost: 2000 * s, note: "Potong renyah mentah" },
+      { name: "Minyak Kelapa & Garam Gula Aren", qty: 15 * s, unit: "gram", estimatedCost: 1000 * s, note: "Penyedap rasa alami" }
+    ],
+    cookingSteps: [
+      { stepNumber: 1, instruction: "Bakar oncom Bandung hingga harum kecokelatan, hancurkan dengan ulekan kasar.", durationMins: 8, chefTip: "Oncom Bandung berkualitas memberikan cita rasa gurih khas." },
+      { stepNumber: 2, instruction: "Ulek cabai rawit, kencur, terasi bakar, bawang merah, gula aren, dan garam hingga harum.", durationMins: 5, chefTip: "Kencur memberikan aroma khas yang segar." },
+      { stepNumber: 3, instruction: "Tumis bumbu ulek bersama oncom dan leunca dengan sedikit minyak kelapa hingga leunca sedikit layu namun tetap renyah.", durationMins: 7, chefTip: "Jangan masak terlalu lama agar leunca tidak pahit." },
+      { stepNumber: 4, instruction: "Tambahkan daun kemangi segar di akhir tumisan, angkat dan sajikan.", durationMins: 2, chefTip: "Sajikan hangat bersama kerupuk aci." }
+    ],
+    servingStyle: "Disajikan di atas cobek gerabah beralaskan daun pisang segar.",
+    pairingRecommendation: "Sempurna disantap bersama Nasi Timbel dan Pepes Ikan Mas."
+  },
+  {
+    recipeTitle: "Pepes Ikan Mas Bumbu Kuning Kemangi",
+    sundaCategory: "Pepes Khas Sunda",
+    originStory: "Ikan mas segar dibumbui rempah kuning melimpah, dibungkus daun pisang batu, dikukus empuk hingga meresap lalu dibakar arang.",
+    estimatedHppPerServing: 20000,
+    suggestedPricePerServing: 52000,
+    marginPercent: "61%",
+    ingredients: (s: number) => [
+      { name: "Ikan Mas Segar", qty: 180 * s, unit: "gram", estimatedCost: 12000 * s, note: "Bersihkan sisik & insang" },
+      { name: "Bumbu Kuning (Kunyit, Kencur, Kemiri, Bawang)", qty: 40 * s, unit: "gram", estimatedCost: 3000 * s, note: "Haluskan dengan ulekan batu" },
+      { name: "Daun Kemangi Melimpah & Sereh Salam", qty: 30 * s, unit: "gram", estimatedCost: 2000 * s, note: "Wangi wangi rempah" },
+      { name: "Daun Pisang Batu & Semat Lidi", qty: 2 * s, unit: "lembar", estimatedCost: 1000 * s, note: "Bungkus rapi tradisional" }
+    ],
+    cookingSteps: [
+      { stepNumber: 1, instruction: "Bersihkan ikan mas, baluri garam dan perasan jeruk nipis. Lumuri seluruh badan ikan dengan bumbu kuning halus.", durationMins: 15, chefTip: "Selipkan bumbu kuning dan daun kemangi ke dalam perut ikan." },
+      { stepNumber: 2, instruction: "Tata daun salam, serai memar, cabai rawit, dan kemangi di atas daun pisang batu, letakkan ikan lalu bungkus rapat dan semat lidi.", durationMins: 10, chefTip: "Daun pisang batu tidak mudah robek dan memberi aroma harum alami." },
+      { stepNumber: 3, instruction: "Kukus pepes selama 45 menit hingga bumbu meresap merata dan duri ikan melunak.", durationMins: 45, chefTip: "Kukus dengan api sedang bertutup rapat." },
+      { stepNumber: 4, instruction: "Bakar sebentar bungkus pepes di atas arang batok kelapa hingga daun mengering dan aromatik.", durationMins: 8, chefTip: "Proses pembakaran arang memunculkan rasa gurih asap khas." }
+    ],
+    servingStyle: "Disajikan utuh berbungkus daun pisang yang dibuka sedikit untuk memperlihatkan kepulan uap harum.",
+    pairingRecommendation: "Sangat pas ditemani Sayur Asem Komplit dan Sambal Dadak."
+  },
+  {
+    recipeTitle: "Ayam Goreng Bumbu Lengkuas Serundeng",
+    sundaCategory: "Ayam & Bebek Pasundan",
+    originStory: "Ayam pejantan diungkep bumbu parutan lengkuas melimpah, digoreng keemasan dengan taburan serundeng lengkuas garing gurih.",
+    estimatedHppPerServing: 22000,
+    suggestedPricePerServing: 58000,
+    marginPercent: "62%",
+    ingredients: (s: number) => [
+      { name: "Daging Ayam Pejantan Segar", qty: 200 * s, unit: "gram", estimatedCost: 14000 * s, note: "Potongan porsi padat" },
+      { name: "Lengkuas Muda Parut Melimpah", qty: 60 * s, unit: "gram", estimatedCost: 3500 * s, note: "Bumbu serundeng garing" },
+      { name: "Bumbu Ungkep (Kunyit, Ketumbar, Bawang, Kemiri)", qty: 35 * s, unit: "gram", estimatedCost: 2500 * s, note: "Ulek halus harum" },
+      { name: "Salam Sereh & Air Kelapa", qty: 50 * s, unit: "ml", estimatedCost: 1000 * s, note: "Ungkep gurih alami" }
+    ],
+    cookingSteps: [
+      { stepNumber: 1, instruction: "Ungkep potongan ayam bersama parutan lengkuas, bumbu halus, daun salam, serai, dan air kelapa hingga air menyusut dan ayam empuk.", durationMins: 35, chefTip: "Air kelapa membuat serat daging manis gurih alami." },
+      { stepNumber: 2, instruction: "Tiriskan ayam dan pisahkan parutan lengkuas sisa ungkepan.", durationMins: 5, chefTip: "Goreng secara terpisah agar serundeng lengkuas tidak gosong." },
+      { stepNumber: 3, instruction: "Goreng ayam hingga kuning keemasan, lalu goreng parutan lengkuas hingga garing renyah kecokelatan.", durationMins: 10, chefTip: "Gunakan saringan halus saat mengangkat serundeng lengkuas." },
+      { stepNumber: 4, instruction: "Taburi serundeng lengkuas garing melimpah di atas ayam goreng.", durationMins: 2, chefTip: "Sajikan hangat bersama sambal goang hijau." }
+    ],
+    servingStyle: "Disajikan di atas piring beralas daun pisang dengan taburan serundeng lengkuas gurih melimpah.",
+    pairingRecommendation: "Nikmat disandingkan dengan Nasi Hangat, Sayur Asem, dan Sambal Goang."
+  },
+  {
+    recipeTitle: "Sayur Asem Komplit Khas Parahyangan",
+    sundaCategory: "Sayuran & Sup",
+    originStory: "Kesegaran kuah asam jawa dan gurih terasi bakar dengan kombinasi melinjo, jagung manis, labu siam, dan kacang panjang.",
+    estimatedHppPerServing: 10000,
+    suggestedPricePerServing: 28000,
+    marginPercent: "64%",
+    ingredients: (s: number) => [
+      { name: "Aneka Sayur Asem (Melinjo, Jagung, Labu Siam, Kacang Panjang)", qty: 200 * s, unit: "gram", estimatedCost: 4500 * s, note: "Potong rapi segar" },
+      { name: "Bumbu Asem Jawa & Terasi Bakar", qty: 25 * s, unit: "gram", estimatedCost: 2000 * s, note: "Seduh air hangat" },
+      { name: "Bumbu Halus (Cabai Merah, Bawang, Kemiri)", qty: 25 * s, unit: "gram", estimatedCost: 1500 * s, note: "Haluskan halus" },
+      { name: "Kacang Tanah & Daun Melinjo", qty: 30 * s, unit: "gram", estimatedCost: 1000 * s, note: "Rebus empuk" }
+    ],
+    cookingSteps: [
+      { stepNumber: 1, instruction: "Didihkan air, masukkan bumbu halus, asam jawa, terasi bakar, daun salam, dan lengkuas memar.", durationMins: 10, chefTip: "Rebus bumbu hingga wangi harum keluar." },
+      { stepNumber: 2, instruction: "Masukkan bahan keras terlebih dahulu: jagung manis, melinjo, dan kacang tanah. Masak hingga setengah empuk.", durationMins: 15, chefTip: "Memasak bertahap menjaga tekstur sayuran." },
+      { stepNumber: 3, instruction: "Masukkan labu siam, kacang panjang, dan daun melinjo. Bumbui gula aren dan garam secukupnya.", durationMins: 8, chefTip: "Cicipi paduan rasa asam, manis, dan gurih yang seimbang." },
+      { stepNumber: 4, instruction: "Angkat dan sajikan kuah segar asam manis dalam mangkuk gerabah.", durationMins: 2, chefTip: "Nikmati selagi panas." }
+    ],
+    servingStyle: "Disajikan dalam mangkuk gerabah dalam keadaan panas dengan kuah bening kemerahan yang segar.",
+    pairingRecommendation: "Pendamping setia untuk Ikan Asin Jambal Roti, Sambal Terasi, dan Nasi Liwet."
+  },
+  {
+    recipeTitle: "Sambal Dadak Limau & Goang Hijau",
+    sundaCategory: "Sambal Khas Sunda",
+    originStory: "Dua varian sambal mentah ikonik Sunda: Sambal Dadak terasi ulek kasar & Sambal Goang hijau kencur siram minyak panas.",
+    estimatedHppPerServing: 5000,
+    suggestedPricePerServing: 16000,
+    marginPercent: "68%",
+    ingredients: (s: number) => [
+      { name: "Cabai Rawit Merah & Hijau Segar", qty: 30 * s, unit: "gram", estimatedCost: 2000 * s, note: "Segar dipetik" },
+      { name: "Kencur & Terasi Bakar Pasundan", qty: 10 * s, unit: "gram", estimatedCost: 1000 * s, note: "Bakar arang harum" },
+      { name: "Jeruk Limau & Minyak Kelapa Panas", qty: 15 * s, unit: "ml", estimatedCost: 1000 * s, note: "Siraman harum" },
+      { name: "Tomat Hijau, Garam & Gula Aren", qty: 15 * s, unit: "gram", estimatedCost: 500 * s, note: "Penyeimbang rasa" }
+    ],
+    cookingSteps: [
+      { stepNumber: 1, instruction: "Untuk Sambal Goang Hijau: Ulek kasar cabai rawit hijau, kencur, garam, dan bawang putih di atas cobek batu.", durationMins: 3, chefTip: "Siram dengan 1 sendok makan minyak kelapa mendidih." },
+      { stepNumber: 2, instruction: "Untuk Sambal Dadak: Ulek kasar cabai merah, terasi bakar, gula aren, garam, dan irisan tomat.", durationMins: 3, chefTip: "Kucuri perasan jeruk limau segar beserta kulitnya." },
+      { stepNumber: 3, instruction: "Tata kedua jenis sambal berdampingan di piring cobek cembung.", durationMins: 2, chefTip: "Sajikan segera tanpa disimpan lama agar rasa mentah tetap segar." }
+    ],
+    servingStyle: "Disajikan berdampingan di atas cobek batu cembung beralas daun pisang.",
+    pairingRecommendation: "Cocok untuk melengkapi seluruh hidangan gorengan, bakaran, dan lalapan mentah Saung Lesehan."
+  },
+  {
+    recipeTitle: "Gepuk Sapi Serundeng Manis Gurih",
+    sundaCategory: "Olahan Daging Sapi",
+    originStory: "Daging sapi pilihan direbus empuk, dipukul-pukul hingga seratnya memipih lebar, lalu digoreng dengan bumbu rempah kelapa gurih manis.",
+    estimatedHppPerServing: 26000,
+    suggestedPricePerServing: 68000,
+    marginPercent: "61%",
+    ingredients: (s: number) => [
+      { name: "Daging Sapi Has Dalam", qty: 120 * s, unit: "gram", estimatedCost: 16000 * s, note: "Rebus empuk memarkan" },
+      { name: "Santan & Kelapa Parut Sangrai", qty: 40 * s, unit: "gram", estimatedCost: 3000 * s, note: "Serundeng gurih" },
+      { name: "Gula Aren Asli Pasundan", qty: 25 * s, unit: "gram", estimatedCost: 2000 * s, note: "Manis gurih legi" },
+      { name: "Bumbu Halus (Ketumbar, Bawang, Lengkuas, Salam)", qty: 30 * s, unit: "gram", estimatedCost: 2000 * s, note: "Ungkep meresap" }
+    ],
+    cookingSteps: [
+      { stepNumber: 1, instruction: "Rebus daging sapi dalam air bergaram hingga setengah empuk. Potong searah serat lalu pukul-pukul perlahan dengan pemukul daging hingga memipih.", durationMins: 35, chefTip: "Memukul searah serat membuat daging empuk tanpa hancur." },
+      { stepNumber: 2, instruction: "Ungkep daging pipih bersama bumbu halus ketumbar, gula aren, air asam jawa, dan santan hingga meresap dan mengering.", durationMins: 30, chefTip: "Gunakan api kecil agar gula aren meresap dalam serat." },
+      { stepNumber: 3, instruction: "Goreng daging gepuk sebentar dalam minyak panas hingga kecokelatan mengkaramel.", durationMins: 5, chefTip: "Jangan goreng terlalu lama agar daging tidak keras." },
+      { stepNumber: 4, instruction: "Goreng sisa bumbu kelapa hingga menjadi serundeng garing, taburkan di atas gepuk.", durationMins: 5, chefTip: "Sajikan hangat bersama nasi timbel." }
+    ],
+    servingStyle: "Disajikan di atas piring beralas daun pisang dengan taburan serundeng manis gurih melimpah.",
+    pairingRecommendation: "Sangat serasi disandingkan dengan Nasi Timbel, Sayur Asem, dan Sambal Terasi."
+  }
+];
+
 export function buildSmartSundaRecipe(recipeName: string, targetServings: number) {
   const nameLower = (recipeName || "").toLowerCase().trim();
   const servings = Number(targetServings) || 4;
@@ -150,30 +329,20 @@ export function buildSmartSundaRecipe(recipeName: string, targetServings: number
     nameLower === "cari ide";
 
   if (isIdeaRequest) {
+    const randomIndex = Math.floor(Math.random() * SUNDA_IDEAS_POOL.length);
+    const tmpl = SUNDA_IDEAS_POOL[randomIndex];
     return {
-      recipeTitle: "Ayam Bakar Bekakak Bumbu Lengkuas",
-      sundaCategory: "Ayam & Bebek Pasundan",
-      originStory: "Sajian ayam kampung utuh khas hajatan & saung lesehan Sunda yang diungkep bumbu rempah lengkuas harum lalu dibakar arang dengan olesan kecap manis gurih.",
+      recipeTitle: tmpl.recipeTitle,
+      sundaCategory: tmpl.sundaCategory,
+      originStory: tmpl.originStory,
       servings,
-      estimatedHppPerServing: 28000,
-      suggestedPricePerServing: 75000,
-      marginPercent: "63%",
-      ingredients: [
-        { name: "Daging Ayam Kampung Utuh (Belah Bekakak)", qty: 250 * servings, unit: "gram", estimatedCost: 20000 * servings, note: "Pilihan segar utuh tidak putus" },
-        { name: "Bumbu Ungkep (Lengkuas, Kunyit, Jahe, Kemiri, Bawang)", qty: 40 * servings, unit: "gram", estimatedCost: 3500 * servings, note: "Ulek halus harum" },
-        { name: "Santan Kelapa & Daun Salam Sereh Memar", qty: 30 * servings, unit: "ml", estimatedCost: 1500 * servings, note: "Memberikan kelezatan gurih meresap" },
-        { name: "Kecap Manis Pasundan & Margarin Olesan", qty: 25 * servings, unit: "gram", estimatedCost: 1500 * servings, note: "Olesan bakar arang" },
-        { name: "Lalapan Komplit (Leunca, Kemangi, Terong Bulat, Timun)", qty: 60 * servings, unit: "gram", estimatedCost: 2000 * servings, note: "Lalapan segar mentah" },
-        { name: "Cobek Sambal Terasi Dadak", qty: 20 * servings, unit: "gram", estimatedCost: 1500 * servings, note: "Ulek dadakan dengan jeruk limau" }
-      ],
-      cookingSteps: [
-        { stepNumber: 1, instruction: "Cuci bersih ayam kampung utuh belah bekakak, baluri air jeruk nipis dan garam. Diamkan 15 menit.", durationMins: 15, chefTip: "Menghilangkan aroma tidak sedap dan melunakkan serat daging." },
-        { stepNumber: 2, instruction: "Tumis bumbu halus lengkuas, kunyit, daun salam, dan serai. Masukkan santan dan ayam utuh, ungkep hingga daging empuk dan air meresap.", durationMins: 35, chefTip: "Gunakan api kecil agar bumbu meresap sampai ke dalam tulang." },
-        { stepNumber: 3, instruction: "Olesi ayam ungkep dengan campuran sisa bumbu, kecap manis, dan margarin. Bakar di atas arang batok kelapa hingga wangi mengkaramel.", durationMins: 12, chefTip: "Olesi 2-3 kali saat dibakar agar warna cokelat keemasan menggugah selera." },
-        { stepNumber: 4, instruction: "Sajikan utuh di atas tampah beralas daun pisang bersama sambal dadak dan lalapan segar.", durationMins: 2, chefTip: "Nikmati selagi panas bersama Nasi Liwet Kastrol." }
-      ],
-      servingStyle: "Disajikan utuh bentuk bekakak di atas tampah beralas daun pisang segar, dilengkapi cobek sambal terasi dadak dan lalapan komplit.",
-      pairingRecommendation: "Sangat nikmat disandingkan dengan Nasi Liwet Kastrol dan Es Kelapa Muda Jeruk."
+      estimatedHppPerServing: tmpl.estimatedHppPerServing,
+      suggestedPricePerServing: tmpl.suggestedPricePerServing,
+      marginPercent: tmpl.marginPercent,
+      ingredients: tmpl.ingredients(servings),
+      cookingSteps: tmpl.cookingSteps,
+      servingStyle: tmpl.servingStyle,
+      pairingRecommendation: tmpl.pairingRecommendation
     };
   }
 
@@ -437,19 +606,21 @@ export function buildSmartSundaRecipe(recipeName: string, targetServings: number
 
 export function normalizeSundaRecipeData(raw: any, defaultTitle: string, targetServings: number) {
   const servings = Number(raw?.servings || raw?.targetServings || targetServings) || 4;
-  let recipeTitle = raw?.recipeTitle || raw?.recipeName || raw?.title || defaultTitle || "Masakan Sunda Parahyangan";
+  let rawTitle = raw?.recipeTitle || raw?.recipeName || raw?.title || defaultTitle || "Masakan Sunda Parahyangan";
   
-  const titleLower = recipeTitle.toLowerCase();
+  const titleLower = rawTitle.toLowerCase().trim();
   const isIdeaRequest = 
     titleLower.includes("cari ide") || 
     titleLower.includes("minta ide") || 
     titleLower.includes("rekomendasi") ||
+    titleLower.includes("bingung") ||
+    titleLower.includes("terserah") ||
     titleLower === "ide" ||
     titleLower === "cari";
 
-  const smartFallback = buildSmartSundaRecipe(recipeTitle, servings);
+  const smartFallback = buildSmartSundaRecipe(isIdeaRequest ? "minta ide" : rawTitle, servings);
 
-  let finalTitle = isIdeaRequest ? smartFallback.recipeTitle : recipeTitle;
+  let finalTitle = isIdeaRequest ? smartFallback.recipeTitle : rawTitle;
 
   let ingredients = Array.isArray(raw?.ingredients) && raw.ingredients.length > 0
     ? raw.ingredients.map((ing: any, i: number) => ({
@@ -514,8 +685,47 @@ export async function generateSundaRecipeClient(recipeName: string, targetServin
     return normalizeSundaRecipeData(null, recipeName, targetServings);
   }
 
+  const nameLower = (recipeName || "").toLowerCase().trim();
+  const isIdeaRequest = 
+    nameLower.includes("ide") || 
+    nameLower.includes("rekomendasi") || 
+    nameLower.includes("bingung") || 
+    nameLower.includes("bebas") || 
+    nameLower.includes("saran") || 
+    nameLower.includes("terserah") ||
+    nameLower.includes("apa aja") ||
+    nameLower.includes("apa saja") ||
+    nameLower === "cari" ||
+    nameLower === "cari ide";
+
   const ai = new GoogleGenAI({ apiKey: cleanKey });
-  const promptText = `Buatkan resep masakan Sunda otentik & presisi untuk hidangan: "${recipeName}" porsi: ${targetServings} porsi.
+  
+  const promptText = isIdeaRequest
+    ? `Pengguna meminta ide resep masakan Sunda yang lezat dan beragam. Pilihlah SATU menu masakan Sunda yang unik dan populer (seperti Nasi Liwet Kastrol, Gurame Cobek, Ulukutek Oncom, Pepes Ikan Mas, Karedok Leunca, Gepuk Daging, Sayur Asem, dsb). JANGAN pilih Ayam Bakar Bekakak kecuali jika tidak ada pilihan lain. Buatkan resep presisi untuk ${targetServings} porsi.
+
+PENTING & WAJIB:
+- Tuliskan NAMA BAHAN SPESIFIK & REALISTIS untuk hidangan yang kamu pilih.
+- JANGAN GUNAKAN nama generik seperti "Bahan Utama" atau "Bahan 1".
+
+Kembalikan HANYA JSON valid dengan format:
+{
+  "recipeTitle": "Nama Hidangan Sunda yang Kamu Pilih",
+  "sundaCategory": "Nasi & Paket Liwet / Olahan Ikan / Sayuran & Sup / Pepes / Sambal",
+  "originStory": "Filosofi keautentikan hidangan ini dalam 2 kalimat khas Sunda",
+  "servings": ${targetServings},
+  "estimatedHppPerServing": 22000,
+  "suggestedPricePerServing": 65000,
+  "marginPercent": "66%",
+  "ingredients": [
+    { "name": "Nama Bahan Spesifik", "qty": 100, "unit": "gram/ml/buah/ekor", "estimatedCost": 5000, "note": "catatan koki" }
+  ],
+  "cookingSteps": [
+    { "stepNumber": 1, "instruction": "Langkah spesifik memasak", "durationMins": 10, "chefTip": "Tips koki" }
+  ],
+  "servingStyle": "Saran penyajian di saung lesehan Sunda",
+  "pairingRecommendation": "Rekomendasi minuman/pencuci mulut"
+}`
+    : `Buatkan resep masakan Sunda otentik & presisi untuk hidangan: "${recipeName}" porsi: ${targetServings} porsi.
 
 PENTING & WAJIB:
 - Tuliskan NAMA BAHAN SPESIFIK & REALISTIS untuk hidangan "${recipeName}".
@@ -549,7 +759,7 @@ Kembalikan HANYA JSON valid dengan format:
         contents: promptText,
         config: {
           systemInstruction: "Anda adalah Executive Chef Spesialis Masakan Sunda Parahyangan yang sangat paham resep kuliner Sunda autentik.",
-          temperature: 0.7
+          temperature: 0.85
         }
       });
 

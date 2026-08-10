@@ -222,6 +222,19 @@ async function startServer() {
       return res.status(400).json({ error: "Nama masakan Sunda diperlukan" });
     }
 
+    const nameLower = (recipeName || "").toLowerCase().trim();
+    const isIdeaRequest = 
+      nameLower.includes("ide") || 
+      nameLower.includes("rekomendasi") || 
+      nameLower.includes("bingung") || 
+      nameLower.includes("bebas") || 
+      nameLower.includes("saran") || 
+      nameLower.includes("terserah") ||
+      nameLower.includes("apa aja") ||
+      nameLower.includes("apa saja") ||
+      nameLower === "cari" ||
+      nameLower === "cari ide";
+
     const fallbackRecipe = buildSmartSundaRecipe(recipeName, Number(targetServings) || 4);
 
     if (!getAiClient(customApiKey)) {
@@ -230,9 +243,38 @@ async function startServer() {
 
     try {
       const systemInstruction = `Anda adalah Executive Chef Spesialis Kuliner Sunda Parahyangan.
-Tugas Anda adalah membuat resep masakan Sunda otentik, spesifik, dan presisi tinggi untuk bisnis restoran/saung lesehan.`;
+Tugas Anda adalah membuat resep masakan Sunda otentik, spesifik, kreatif, dan presisi tinggi untuk bisnis restoran/saung lesehan.`;
 
-      const promptText = `Buatkan resep masakan Sunda otentik & presisi untuk hidangan: "${recipeName}" porsi: ${targetServings} porsi.
+      let promptText = "";
+      if (isIdeaRequest) {
+        promptText = `Pengguna meminta ide / rekomendasi menu masakan Sunda otentik yang unik dan lezat untuk saung lesehan.
+PILIHKAN SATU MASAKAN SUNDA SECARA ACAK/KREATIF yang menarik dan berbeda (misalnya: Gurame Cobek Mangut, Nasi Liwet Kastrol Pete Teri Medan, Karedok Leunca & Ulukutek Oncom, Pepes Ikan Mas Bumbu Kuning Kemangi, Ayam Goreng Lengkuas, Sambal Dadak Goang Hijau, Gepuk Daging Sapi Serundeng, Sayur Asem Komplit, Tumis Genyor, Pindang Gunung, Tahu Sumedang Lada Garam, Dsb).
+Buatkan resep presisi untuk hidangan terpilih tersebut porsi: ${targetServings} porsi.
+
+PENTING:
+- Tuliskan NAMA MASAKAN SUNDA TERPILIH secara spesifik di "recipeTitle" (DILARANG MENGGUNAKAN kata 'minta ide' atau 'cari ide' sebagai judul!).
+- Tuliskan NAMA BAHAN REALISTIS & SPESIFIK sesuai hidangan yang Anda pilih tersebut.
+
+Kembalikan HANYA JSON valid berformat:
+{
+  "recipeTitle": "Nama Masakan Sunda Terpilih yang Spesifik",
+  "sundaCategory": "Nasi & Paket Liwet / Olahan Ikan / Sayuran & Sup / Pepes / Sambal / Ayam & Bebek / Olahan Daging Sapi",
+  "originStory": "Filosofi keautentikan hidangan ini dalam 2 kalimat khas Sunda",
+  "servings": ${targetServings},
+  "estimatedHppPerServing": 22000,
+  "suggestedPricePerServing": 65000,
+  "marginPercent": "66%",
+  "ingredients": [
+    { "name": "Nama Bahan Spesifik", "qty": 100, "unit": "gram/ml/buah/ekor", "estimatedCost": 5000, "note": "catatan koki" }
+  ],
+  "cookingSteps": [
+    { "stepNumber": 1, "instruction": "Langkah spesifik memasak", "durationMins": 10, "chefTip": "Tips koki" }
+  ],
+  "servingStyle": "Saran penyajian di saung lesehan Sunda",
+  "pairingRecommendation": "Rekomendasi minuman/pencuci mulut"
+}`;
+      } else {
+        promptText = `Buatkan resep masakan Sunda otentik & presisi untuk hidangan: "${recipeName}" porsi: ${targetServings} porsi.
 
 PENTING & WAJIB:
 - Tuliskan NAMA BAHAN SPESIFIK & REALISTIS untuk hidangan "${recipeName}".
@@ -257,11 +299,12 @@ Kembalikan HANYA JSON valid berformat:
   "servingStyle": "Saran penyajian di saung lesehan Sunda",
   "pairingRecommendation": "Rekomendasi minuman/pencuci mulut"
 }`;
+      }
 
       const responseText = await generateGeminiContentWithFallback({
         contents: promptText,
         systemInstruction,
-        temperature: 0.7,
+        temperature: 0.8,
         customApiKey,
       });
 
