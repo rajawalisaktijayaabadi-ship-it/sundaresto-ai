@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { generateSundaRecipeClient } from "../utils/geminiClient";
 import { MenuItem, InventoryItem, RecipeIngredient, MenuCategory } from "../types";
 import { formatRupiah } from "../utils/formatters";
 import {
@@ -114,14 +115,36 @@ export const RecipeHppModule: React.FC<RecipeHppModuleProps> = ({
         })
       });
 
-      const data = await response.json();
-      if (data.success && data.data) {
-        setGeneratedRecipe(data.data);
-      } else {
-        showToast("Gagal menghasilkan resep. Menggunakan resep standar...");
+      const contentType = response.headers.get("content-type") || "";
+      if (response.ok && contentType.includes("application/json")) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setGeneratedRecipe(data.data);
+          return;
+        }
       }
+
+      // If server is unavailable / 404 static deploy, fallback to client Gemini direct call
+      if (savedKey) {
+        console.warn("Server route 404, generating Sunda recipe via direct client Gemini AI...");
+        const clientData = await generateSundaRecipeClient(promptToUse, targetServings, savedKey);
+        setGeneratedRecipe(clientData);
+        return;
+      }
+
+      showToast("Gagal menghasilkan resep.");
     } catch (err) {
-      console.error("Recipe API error:", err);
+      console.error("Recipe API error, attempting direct client fallback...", err);
+      const savedKey = localStorage.getItem("custom_gemini_api_key") || "";
+      if (savedKey) {
+        try {
+          const clientData = await generateSundaRecipeClient(promptToUse, targetServings, savedKey);
+          setGeneratedRecipe(clientData);
+          return;
+        } catch (clientErr: any) {
+          console.error("Client AI failed:", clientErr);
+        }
+      }
       showToast("Gagal terhubung ke AI server.");
     } finally {
       setIsGeneratingRecipe(false);

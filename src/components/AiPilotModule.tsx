@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { generateCopilotClient } from "../utils/geminiClient";
 import {
   Bot,
   Sparkles,
@@ -128,13 +129,36 @@ export const AiPilotModule: React.FC<AiPilotModuleProps> = ({
           customApiKey: savedKey
         })
       });
-      const json = await res.json();
-      if (json.success && json.data) {
-        setAiResult(json.data);
-      } else {
-        throw new Error("API Fallback");
+
+      const contentType = res.headers.get("content-type") || "";
+      if (res.ok && contentType.includes("application/json")) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          setAiResult(json.data);
+          return;
+        }
       }
+
+      // If server route is 404/static deploy, try direct client Gemini call if key exists
+      if (savedKey) {
+        console.warn("Server unavailable/404, generating via direct client Gemini AI...");
+        const clientData = await generateCopilotClient(activeTab, promptText, contextData, savedKey);
+        setAiResult(clientData);
+        return;
+      }
+
+      throw new Error("API Fallback");
     } catch {
+      const savedKey = localStorage.getItem("custom_gemini_api_key") || "";
+      if (savedKey) {
+        try {
+          const clientData = await generateCopilotClient(activeTab, promptText, contextData, savedKey);
+          setAiResult(clientData);
+          return;
+        } catch (e) {
+          console.warn("Client AI attempt failed:", e);
+        }
+      }
       // High quality local fallback depending on tab or natural prompt
       setAiResult(generateSmartFallback(activeTab, promptText));
     } finally {

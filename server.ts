@@ -55,11 +55,11 @@ async function startServer() {
       throw new Error("GEMINI_API_KEY environment variable is not configured.");
     }
 
-    const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+    const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"];
     let lastError: any = null;
 
     for (const model of modelsToTry) {
-      // Try each model up to 2 times for transient errors
+      // Try each model up to 2 times
       for (let attempt = 1; attempt <= 2; attempt++) {
         try {
           const response = await client.models.generateContent({
@@ -75,12 +75,21 @@ async function startServer() {
           }
         } catch (err: any) {
           lastError = err;
-          console.warn(`[Gemini API Warning] Model '${model}' attempt ${attempt} failed: ${err.message || err}`);
+          const errMsg = err.message || String(err);
+          console.warn(`[Gemini API Warning] Model '${model}' attempt ${attempt} failed: ${errMsg}`);
+          if (errMsg.includes("429") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("Quota exceeded")) {
+            break; // Skip retry on quota limit
+          }
           if (attempt < 2) {
             await new Promise((res) => setTimeout(res, 300));
           }
         }
       }
+    }
+
+    const finalErrMsg = lastError?.message || String(lastError || "");
+    if (finalErrMsg.includes("429") || finalErrMsg.includes("RESOURCE_EXHAUSTED") || finalErrMsg.includes("Quota exceeded")) {
+      throw new Error("Batas Kuota Gemini API (429 Rate Limit) tercapai. Silakan tunggu 1-2 menit atau perbarui API Key Google AI Studio Anda.");
     }
 
     throw lastError || new Error("All Gemini generation attempts failed.");

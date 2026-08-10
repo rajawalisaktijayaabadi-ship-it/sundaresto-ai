@@ -33,6 +33,8 @@ import {
   Clock
 } from "lucide-react";
 
+import { testGeminiApiKeyClient } from "../utils/geminiClient";
+
 interface SettingsModuleProps {
   license: LicenseInfo;
   onUpdateLicense: (info: LicenseInfo) => void;
@@ -110,21 +112,19 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
       });
 
       const contentType = res.headers.get("content-type") || "";
-      if (contentType.includes("application/json")) {
+      if (res.ok && contentType.includes("application/json")) {
         const data = await res.json();
         setTestResult(data);
       } else {
-        const textResponse = await res.text();
-        setTestResult({
-          success: false,
-          message: `Server merespon dengan status ${res.status}: ${textResponse.slice(0, 120)}...`
-        });
+        // Fallback to client direct test if server is static SPA (e.g. Vercel/Netlify 404)
+        console.warn(`Server status ${res.status}, falling back to direct client API call...`);
+        const clientResult = await testGeminiApiKeyClient(keyToTest);
+        setTestResult(clientResult);
       }
     } catch (err: any) {
-      setTestResult({
-        success: false,
-        message: `Gagal menghubungi server tes: ${err.message || err}`
-      });
+      console.warn("Server test failed, attempting client direct test...", err);
+      const clientResult = await testGeminiApiKeyClient(keyToTest);
+      setTestResult(clientResult);
     } finally {
       setIsTestingKey(false);
     }
