@@ -16,12 +16,15 @@ async function startServer() {
 
   app.use(express.json({ limit: "10mb" }));
 
-  // Initialize Gemini AI Client (Server-side only)
-  let aiClient: GoogleGenAI | null = null;
-  if (process.env.GEMINI_API_KEY) {
+  // Helper function to lazily get or initialize Gemini AI Client
+  function getAiClient(): GoogleGenAI | null {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key || key.trim() === "" || key === "MY_GEMINI_API_KEY") {
+      return null;
+    }
     try {
-      aiClient = new GoogleGenAI({
-        apiKey: process.env.GEMINI_API_KEY,
+      return new GoogleGenAI({
+        apiKey: key,
         httpOptions: {
           headers: {
             "User-Agent": "aistudio-build",
@@ -30,6 +33,7 @@ async function startServer() {
       });
     } catch (err) {
       console.warn("Failed to initialize GoogleGenAI client:", err);
+      return null;
     }
   }
 
@@ -39,18 +43,19 @@ async function startServer() {
     systemInstruction?: string;
     temperature?: number;
   }): Promise<string> {
-    if (!aiClient) {
-      throw new Error("Gemini AI client is not initialized.");
+    const client = getAiClient();
+    if (!client) {
+      throw new Error("GEMINI_API_KEY environment variable is not configured.");
     }
 
-    const modelsToTry = ["gemini-3.6-flash", "gemini-2.5-flash"];
+    const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
     let lastError: any = null;
 
     for (const model of modelsToTry) {
       // Try each model up to 2 times for transient errors
       for (let attempt = 1; attempt <= 2; attempt++) {
         try {
-          const response = await aiClient.models.generateContent({
+          const response = await client.models.generateContent({
             model,
             contents: params.contents,
             config: {
@@ -65,7 +70,7 @@ async function startServer() {
           lastError = err;
           console.warn(`[Gemini API Warning] Model '${model}' attempt ${attempt} failed: ${err.message || err}`);
           if (attempt < 2) {
-            await new Promise((res) => setTimeout(res, 400));
+            await new Promise((res) => setTimeout(res, 300));
           }
         }
       }
@@ -204,7 +209,7 @@ async function startServer() {
       pairingRecommendation: "Sangat pas disandingkan dengan Es Kelapa Muda Jeruk & Kerupuk Aci khas Parahyangan."
     };
 
-    if (!aiClient) {
+    if (!getAiClient()) {
       return res.json({ success: true, isMock: true, data: fallbackRecipe });
     }
 
@@ -362,7 +367,7 @@ Kembalikan respon JSON persis berformat:
       };
     };
 
-    if (!aiClient) {
+    if (!getAiClient()) {
       // Use smart rich structured fallback if API key is not configured
       const fallback = getFallbackAIResponse(mode, prompt);
       return res.json({ success: true, isMock: true, data: fallback });
