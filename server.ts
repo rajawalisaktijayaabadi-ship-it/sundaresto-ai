@@ -16,6 +16,17 @@ async function startServer() {
 
   app.use(express.json({ limit: "10mb" }));
 
+  // Enable CORS & OPTIONS preflight for custom headers like x-gemini-api-key
+  app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-gemini-api-key");
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
   // Helper function to lazily get or initialize Gemini AI Client
   function getAiClient(customKey?: string): GoogleGenAI | null {
     const key = (customKey && customKey.trim().length > 0) ? customKey.trim() : process.env.GEMINI_API_KEY;
@@ -24,12 +35,7 @@ async function startServer() {
     }
     try {
       return new GoogleGenAI({
-        apiKey: key,
-        httpOptions: {
-          headers: {
-            "User-Agent": "aistudio-build",
-          },
-        },
+        apiKey: key.trim(),
       });
     } catch (err) {
       console.warn("Failed to initialize GoogleGenAI client:", err);
@@ -49,7 +55,7 @@ async function startServer() {
       throw new Error("GEMINI_API_KEY environment variable is not configured.");
     }
 
-    const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+    const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
     let lastError: any = null;
 
     for (const model of modelsToTry) {

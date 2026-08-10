@@ -108,8 +108,18 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
         },
         body: JSON.stringify({ customApiKey: keyToTest })
       });
-      const data = await res.json();
-      setTestResult(data);
+
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const data = await res.json();
+        setTestResult(data);
+      } else {
+        const textResponse = await res.text();
+        setTestResult({
+          success: false,
+          message: `Server merespon dengan status ${res.status}: ${textResponse.slice(0, 120)}...`
+        });
+      }
     } catch (err: any) {
       setTestResult({
         success: false,
