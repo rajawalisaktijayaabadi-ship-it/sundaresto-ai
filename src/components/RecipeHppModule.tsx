@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { generateSundaRecipeClient } from "../utils/geminiClient";
+import { generateSundaRecipeClient, normalizeSundaRecipeData } from "../utils/geminiClient";
 import { MenuItem, InventoryItem, RecipeIngredient, MenuCategory } from "../types";
 import { formatRupiah } from "../utils/formatters";
 import {
@@ -119,33 +119,24 @@ export const RecipeHppModule: React.FC<RecipeHppModuleProps> = ({
       if (response.ok && contentType.includes("application/json")) {
         const data = await response.json();
         if (data.success && data.data) {
-          setGeneratedRecipe(data.data);
+          setGeneratedRecipe(normalizeSundaRecipeData(data.data, promptToUse, targetServings));
           return;
         }
       }
 
-      // If server is unavailable / 404 static deploy, fallback to client Gemini direct call
-      if (savedKey) {
-        console.warn("Server route 404, generating Sunda recipe via direct client Gemini AI...");
-        const clientData = await generateSundaRecipeClient(promptToUse, targetServings, savedKey);
-        setGeneratedRecipe(clientData);
-        return;
-      }
-
-      showToast("Gagal menghasilkan resep.");
+      // Fallback to client Gemini direct call or smart local fallback
+      const clientData = await generateSundaRecipeClient(promptToUse, targetServings, savedKey);
+      setGeneratedRecipe(normalizeSundaRecipeData(clientData, promptToUse, targetServings));
     } catch (err) {
       console.error("Recipe API error, attempting direct client fallback...", err);
       const savedKey = localStorage.getItem("custom_gemini_api_key") || "";
-      if (savedKey) {
-        try {
-          const clientData = await generateSundaRecipeClient(promptToUse, targetServings, savedKey);
-          setGeneratedRecipe(clientData);
-          return;
-        } catch (clientErr: any) {
-          console.error("Client AI failed:", clientErr);
-        }
+      try {
+        const clientData = await generateSundaRecipeClient(promptToUse, targetServings, savedKey);
+        setGeneratedRecipe(normalizeSundaRecipeData(clientData, promptToUse, targetServings));
+      } catch (clientErr) {
+        console.error("Client fallback error:", clientErr);
+        setGeneratedRecipe(normalizeSundaRecipeData(null, promptToUse, targetServings));
       }
-      showToast("Gagal terhubung ke AI server.");
     } finally {
       setIsGeneratingRecipe(false);
     }
