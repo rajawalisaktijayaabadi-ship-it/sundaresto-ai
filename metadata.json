@@ -1,0 +1,6 @@
+{
+  "name": "SundaResto AI",
+  "description": "Aplikasi Web Smart AI Rumah Makan Sunda terlengkap dengan POS, Saung Management, Inventory BOM, KDS, dan AI Co-Pilot",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
