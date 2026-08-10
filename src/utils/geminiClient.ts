@@ -120,14 +120,125 @@ Jawab HANYA dengan objek JSON valid.`;
   throw lastErr || new Error("Gagal memproses request Gemini AI Co-Pilot");
 }
 
-export function buildSmartSundaRecipe(recipeName: string, targetServings: number) {
-  const nameLower = recipeName.toLowerCase().trim();
-  const servings = Number(targetServings) || 4;
-  const cleanTitle = recipeName.trim() || "Masakan Sunda Parahyangan";
+export function sanitizeSundaTitle(raw: string): string {
+  if (!raw) return "Ayam Bakar Bekakak Pasundan";
+  const cleaned = raw
+    .replace(/\b(cari|minta|tolong|buatkan|resep|ide|rekomendasi|saran|bingung|bebas|apa|saja|aja|menu)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (cleaned.length < 2) {
+    return "Ayam Bakar Bekakak Pasundan";
+  }
+  return cleaned;
+}
 
-  if (nameLower.includes("liwet")) {
+export function buildSmartSundaRecipe(recipeName: string, targetServings: number) {
+  const nameLower = (recipeName || "").toLowerCase().trim();
+  const servings = Number(targetServings) || 4;
+
+  // 1. Check if user is asking for ideas or recommendations
+  const isIdeaRequest = 
+    nameLower.includes("ide") || 
+    nameLower.includes("rekomendasi") || 
+    nameLower.includes("bingung") || 
+    nameLower.includes("bebas") || 
+    nameLower.includes("saran") || 
+    nameLower.includes("terserah") ||
+    nameLower.includes("apa aja") ||
+    nameLower.includes("apa saja") ||
+    nameLower === "cari" ||
+    nameLower === "cari ide";
+
+  if (isIdeaRequest) {
     return {
-      recipeTitle: `Nasi Liwet Kastrol Rempah (${cleanTitle})`,
+      recipeTitle: "Ayam Bakar Bekakak Bumbu Lengkuas",
+      sundaCategory: "Ayam & Bebek Pasundan",
+      originStory: "Sajian ayam kampung utuh khas hajatan & saung lesehan Sunda yang diungkep bumbu rempah lengkuas harum lalu dibakar arang dengan olesan kecap manis gurih.",
+      servings,
+      estimatedHppPerServing: 28000,
+      suggestedPricePerServing: 75000,
+      marginPercent: "63%",
+      ingredients: [
+        { name: "Daging Ayam Kampung Utuh (Belah Bekakak)", qty: 250 * servings, unit: "gram", estimatedCost: 20000 * servings, note: "Pilihan segar utuh tidak putus" },
+        { name: "Bumbu Ungkep (Lengkuas, Kunyit, Jahe, Kemiri, Bawang)", qty: 40 * servings, unit: "gram", estimatedCost: 3500 * servings, note: "Ulek halus harum" },
+        { name: "Santan Kelapa & Daun Salam Sereh Memar", qty: 30 * servings, unit: "ml", estimatedCost: 1500 * servings, note: "Memberikan kelezatan gurih meresap" },
+        { name: "Kecap Manis Pasundan & Margarin Olesan", qty: 25 * servings, unit: "gram", estimatedCost: 1500 * servings, note: "Olesan bakar arang" },
+        { name: "Lalapan Komplit (Leunca, Kemangi, Terong Bulat, Timun)", qty: 60 * servings, unit: "gram", estimatedCost: 2000 * servings, note: "Lalapan segar mentah" },
+        { name: "Cobek Sambal Terasi Dadak", qty: 20 * servings, unit: "gram", estimatedCost: 1500 * servings, note: "Ulek dadakan dengan jeruk limau" }
+      ],
+      cookingSteps: [
+        { stepNumber: 1, instruction: "Cuci bersih ayam kampung utuh belah bekakak, baluri air jeruk nipis dan garam. Diamkan 15 menit.", durationMins: 15, chefTip: "Menghilangkan aroma tidak sedap dan melunakkan serat daging." },
+        { stepNumber: 2, instruction: "Tumis bumbu halus lengkuas, kunyit, daun salam, dan serai. Masukkan santan dan ayam utuh, ungkep hingga daging empuk dan air meresap.", durationMins: 35, chefTip: "Gunakan api kecil agar bumbu meresap sampai ke dalam tulang." },
+        { stepNumber: 3, instruction: "Olesi ayam ungkep dengan campuran sisa bumbu, kecap manis, dan margarin. Bakar di atas arang batok kelapa hingga wangi mengkaramel.", durationMins: 12, chefTip: "Olesi 2-3 kali saat dibakar agar warna cokelat keemasan menggugah selera." },
+        { stepNumber: 4, instruction: "Sajikan utuh di atas tampah beralas daun pisang bersama sambal dadak dan lalapan segar.", durationMins: 2, chefTip: "Nikmati selagi panas bersama Nasi Liwet Kastrol." }
+      ],
+      servingStyle: "Disajikan utuh bentuk bekakak di atas tampah beralas daun pisang segar, dilengkapi cobek sambal terasi dadak dan lalapan komplit.",
+      pairingRecommendation: "Sangat nikmat disandingkan dengan Nasi Liwet Kastrol dan Es Kelapa Muda Jeruk."
+    };
+  }
+
+  // 2. Check AYAM / BEKAKAK / BEBEK
+  if (nameLower.includes("ayam") || nameLower.includes("bekakak") || nameLower.includes("bebek") || nameLower.includes("chick")) {
+    const isBebek = nameLower.includes("bebek");
+    const proteinName = isBebek ? "Daging Bebek Segar" : "Daging Ayam Kampung Utuh";
+    return {
+      recipeTitle: recipeName.trim() || "Ayam Bakar Bekakak Bumbu Lengkuas",
+      sundaCategory: "Ayam & Bebek Pasundan",
+      originStory: `Sajian ${isBebek ? 'bebek' : 'ayam'} khas Sunda yang diungkep bumbu rempah meresap lalu dibakar atau digoreng hingga harum gurih keemasan.`,
+      servings,
+      estimatedHppPerServing: 26000,
+      suggestedPricePerServing: 70000,
+      marginPercent: "63%",
+      ingredients: [
+        { name: proteinName, qty: 220 * servings, unit: "gram", estimatedCost: 18000 * servings, note: "Potongan segar berkualitas" },
+        { name: "Bumbu Ungkep Rempah (Lengkuas, Kunyit, Jahe, Kemiri)", qty: 35 * servings, unit: "gram", estimatedCost: 3000 * servings, note: "Ulek halus tradisional" },
+        { name: "Daun Salam, Sereh Memar & Santan", qty: 25 * servings, unit: "ml", estimatedCost: 1500 * servings, note: "Memberikan kelezatan gurih" },
+        { name: "Kecap Manis Pasundan & Margarin", qty: 20 * servings, unit: "gram", estimatedCost: 1500 * servings, note: "Olesan bakar / bumbu goreng" },
+        { name: "Lalapan Segar & Cobek Sambal Dadak", qty: 50 * servings, unit: "gram", estimatedCost: 2000 * servings, note: "Sajikan komplit saung lesehan" }
+      ],
+      cookingSteps: [
+        { stepNumber: 1, instruction: `Cuci bersih ${isBebek ? 'bebek' : 'ayam'}, baluri perasan jeruk nipis dan garam. Diamkan 15 menit.`, durationMins: 15, chefTip: "Menghilangkan aroma amis." },
+        { stepNumber: 2, instruction: "Ungkep bersama bumbu halus lengkuas, kunyit, daun salam, serai, dan sedikit santan hingga empuk meresap.", durationMins: 30, chefTip: "Ungkep api sedang sampai air surut." },
+        { stepNumber: 3, instruction: "Bakar di atas arang batok kelapa sambil diolesi racikan kecap manis margarin hingga kecokelatan harum.", durationMins: 10, chefTip: "Balik sekali-sekali agar tidak gosong." },
+        { stepNumber: 4, instruction: "Sajikan hangat di atas daun pisang bersama sambal dadak limau & lalapan leunca.", durationMins: 2, chefTip: "Sajikan bersama nasi hangat." }
+      ],
+      servingStyle: "Disajikan di atas piring beralas daun pisang segar, dilengkapi sambal dadak limau dan lalapan leunca.",
+      pairingRecommendation: "Pas disandingkan dengan Es Teh Manis Serai dan Nasi Liwet."
+    };
+  }
+
+  // 3. Check GURAME / NILA / IKAN (must come AFTER Ayam check!)
+  if (nameLower.includes("gurame") || nameLower.includes("nila") || nameLower.includes("ikan") || nameLower.includes("pindang")) {
+    return {
+      recipeTitle: recipeName.trim() || "Gurame Bakar Bumbu Rujak Kecap",
+      sundaCategory: "Olahan Ikan",
+      originStory: "Olahan ikan air tawar khas saung lesehan Sunda dengan teknik marinasi rempah ketumbar kunyit dan olesan kecap manis bakar arang yang meresap sempurna.",
+      servings,
+      estimatedHppPerServing: 28000,
+      suggestedPricePerServing: 75000,
+      marginPercent: "62%",
+      ingredients: [
+        { name: "Ikan Gurame / Nila Segar", qty: 200 * servings, unit: "gram", estimatedCost: 18000 * servings, note: "Potong kerat badan ikan" },
+        { name: "Bumbu Marinasi (Kunyit, Bawang, Ketumbar)", qty: 30 * servings, unit: "gram", estimatedCost: 2000 * servings, note: "Ulek halus marinasi 15 menit" },
+        { name: "Kecap Manis Pasundan & Margarin", qty: 25 * servings, unit: "gram", estimatedCost: 2500 * servings, note: "Olesan bakar arang" },
+        { name: "Jeruk Limau & Sambal Kecap Pedas", qty: 15 * servings, unit: "gram", estimatedCost: 1500 * servings, note: "Aroma wangi segar" },
+        { name: "Lalapan Segar (Timun, Kemangi, Leunca)", qty: 50 * servings, unit: "gram", estimatedCost: 2000 * servings, note: "Lalapan mentah segar" }
+      ],
+      cookingSteps: [
+        { stepNumber: 1, instruction: "Bersihkan ikan gurame, kerat-kerat badannya lalu lumuri perasan jeruk nipis, garam, dan bumbu halus kunyit ketumbar.", durationMins: 15, chefTip: "Marinasi minimal 15 menit agar bau lumpur hilang." },
+        { stepNumber: 2, instruction: "Goreng/bakar setengah matang terlebih dahulu agar daging ikan kokoh dan tidak hancur saat dibakar.", durationMins: 10, chefTip: "Gunakan api arang sedang." },
+        { stepNumber: 3, instruction: "Olesi ikan dengan racikan kecap manis, ketumbar halus, margarin, dan sedikit air asam jawa. Bakar di atas arang batok kelapa.", durationMins: 10, chefTip: "Olesi bertahap 3x hingga kecap mengkaramel cantik." },
+        { stepNumber: 4, instruction: "Sajikan di atas tampah daun pisang bersama sambal kecap rawit limau & cobek sambal dadak.", durationMins: 2, chefTip: "Kucuri perasan jeruk limau segar saat akan disantap." }
+      ],
+      servingStyle: "Disajikan utuh di atas tampah beralas daun pisang, dilengkapi cobek sambal kecap rawit, sambal dadak, dan lalapan segar komplit.",
+      pairingRecommendation: "Sangat pas ditemani Nasi Liwet Kastrol dan Es Jeruk Kelapa Muda."
+    };
+  }
+
+  // 4. Check LIWET / NASI
+  if (nameLower.includes("liwet") || nameLower.includes("nasi") || nameLower.includes("kastrol") || nameLower.includes("timbel")) {
+    return {
+      recipeTitle: recipeName.trim() || "Nasi Liwet Kastrol Rempah Saung",
       sundaCategory: "Nasi & Paket Liwet",
       originStory: "Nasi liwet khas Parahyangan dimasak langsung dalam kastrol aluminium bersama rempah harum, teri medan, dan salam sereh untuk cita rasa gurih autentik saung lesehan.",
       servings,
@@ -153,9 +264,10 @@ export function buildSmartSundaRecipe(recipeName: string, targetServings: number
     };
   }
 
-  if (nameLower.includes("karedok") || nameLower.includes("lotek") || nameLower.includes("pencok")) {
+  // 5. Check KAREDOK / LOTEK / PENCOK
+  if (nameLower.includes("karedok") || nameLower.includes("lotek") || nameLower.includes("pencok") || nameLower.includes("ulukuteuk")) {
     return {
-      recipeTitle: `Karedok / Lotek Pasundan (${cleanTitle})`,
+      recipeTitle: recipeName.trim() || "Karedok / Lotek Pasundan",
       sundaCategory: "Sayuran & Salak Sunda",
       originStory: "Lalapan segar mentah khas Sunda yang disiram bumbu kacang kencur dadak, menciptakan paduan rasa renyah, pedas, gurih, dan segar yang membangkitkan selera.",
       servings,
@@ -182,36 +294,10 @@ export function buildSmartSundaRecipe(recipeName: string, targetServings: number
     };
   }
 
-  if (nameLower.includes("gurame") || nameLower.includes("nila") || nameLower.includes("bakar") || nameLower.includes("goreng")) {
-    return {
-      recipeTitle: `Gurame / Nila Bakar Bumbu Rujak Kecap (${cleanTitle})`,
-      sundaCategory: "Olahan Ikan",
-      originStory: "Olahan ikan air tawar khas saung lesehan Sunda dengan teknik marinasi rempah ketumbar kunyit dan olesan kecap manis bakar arang yang meresap sempurna.",
-      servings,
-      estimatedHppPerServing: 28000,
-      suggestedPricePerServing: 75000,
-      marginPercent: "62%",
-      ingredients: [
-        { name: "Ikan Gurame / Nila Segar", qty: 200 * servings, unit: "gram", estimatedCost: 18000 * servings, note: "Potong kerat badan ikan" },
-        { name: "Bumbu Marinasi (Kunyit, Bawang, Ketumbar)", qty: 30 * servings, unit: "gram", estimatedCost: 2000 * servings, note: "Ulek halus marinasi 15 menit" },
-        { name: "Kecap Manis Pasundan & Margarin", qty: 25 * servings, unit: "gram", estimatedCost: 2500 * servings, note: "Olesan bakar arang" },
-        { name: "Jeruk Limau & Sambal Kecap Pedas", qty: 15 * servings, unit: "gram", estimatedCost: 1500 * servings, note: "Aroma wangi segar" },
-        { name: "Lalapan Segar (Timun, Kemangi, Leunca)", qty: 50 * servings, unit: "gram", estimatedCost: 2000 * servings, note: "Lalapan mentah segar" }
-      ],
-      cookingSteps: [
-        { stepNumber: 1, instruction: "Bersihkan ikan gurame, kerat-kerat badannya lalu lumuri perasan jeruk nipis, garam, dan bumbu halus kunyit ketumbar.", durationMins: 15, chefTip: "Marinasi minimal 15 menit agar bau lumpur hilang." },
-        { stepNumber: 2, instruction: "Goreng/bakar setengah matang terlebih dahulu agar daging ikan kokoh dan tidak hancur saat dibakar.", durationMins: 10, chefTip: "Gunakan api arang sedang." },
-        { stepNumber: 3, instruction: "Olesi ikan dengan racikan kecap manis, ketumbar halus, margarin, dan sedikit air asam jawa. Bakar di atas arang batok kelapa.", durationMins: 10, chefTip: "Olesi bertahap 3x hingga kecap mengkaramel cantik." },
-        { stepNumber: 4, instruction: "Sajikan di atas tampah daun pisang bersama sambal kecap rawit limau & cobek sambal dadak.", durationMins: 2, chefTip: "Kucuri perasan jeruk limau segar saat akan disantap." }
-      ],
-      servingStyle: "Disajikan utuh di atas tampah beralas daun pisang, dilengkapi cobek sambal kecap rawit, sambal dadak, dan lalapan segar komplit.",
-      pairingRecommendation: "Sangat pas ditemani Nasi Liwet Kastrol dan Es Jeruk Kelapa Muda."
-    };
-  }
-
+  // 6. Check PEPES
   if (nameLower.includes("pepes")) {
     return {
-      recipeTitle: `Pepes Bumbu Kuning Kemangi Pasundan (${cleanTitle})`,
+      recipeTitle: recipeName.trim() || "Pepes Bumbu Kuning Kemangi Pasundan",
       sundaCategory: "Pepes Khas Sunda",
       originStory: "Lauk khas Sunda yang dibungkus rapi dengan daun pisang batu, dikukus lama hingga bumbu meresap ke tulang lalu dibakar arang untuk menghasilkan aroma asap nan legendaris.",
       servings,
@@ -219,7 +305,7 @@ export function buildSmartSundaRecipe(recipeName: string, targetServings: number
       suggestedPricePerServing: 50000,
       marginPercent: "60%",
       ingredients: [
-        { name: `Ikan Mas / Tahu / Ayam (${cleanTitle})`, qty: 150 * servings, unit: "gram", estimatedCost: 11000 * servings, note: "Pilihan segar berkualitas" },
+        { name: "Ikan Mas / Tahu / Ayam Segar", qty: 150 * servings, unit: "gram", estimatedCost: 11000 * servings, note: "Pilihan segar berkualitas" },
         { name: "Bumbu Halus Pepes (Kencur, Kunyit, Kemiri, Bawang)", qty: 35 * servings, unit: "gram", estimatedCost: 3000 * servings, note: "Haluskan dengan ulekan batu" },
         { name: "Daun Kemangi Segar (Melimpah)", qty: 20 * servings, unit: "gram", estimatedCost: 1500 * servings, note: "Aroma wangi khas pepes" },
         { name: "Daun Salam, Sereh & Cabai Rawit Utuh", qty: 15 * servings, unit: "gram", estimatedCost: 1500 * servings, note: "Semat dalam bungkusan" },
@@ -236,9 +322,10 @@ export function buildSmartSundaRecipe(recipeName: string, targetServings: number
     };
   }
 
-  if (nameLower.includes("sayur") || nameLower.includes("asem") || nameLower.includes("asam")) {
+  // 7. Check SAYUR ASEM / SUP
+  if (nameLower.includes("sayur") || nameLower.includes("asem") || nameLower.includes("asam") || nameLower.includes("sop")) {
     return {
-      recipeTitle: `Sayur Asem Komplit Priangan (${cleanTitle})`,
+      recipeTitle: recipeName.trim() || "Sayur Asem Komplit Priangan",
       sundaCategory: "Sayuran & Sup",
       originStory: "Kombinasi kesegaran kuah asam jawa dan gurihnya terasi bakar dengan aneka hasil bumi Parahyangan seperti melinjo, jagung manis, dan labu siam.",
       servings,
@@ -264,9 +351,10 @@ export function buildSmartSundaRecipe(recipeName: string, targetServings: number
     };
   }
 
-  if (nameLower.includes("soto") || nameLower.includes("gepuk") || nameLower.includes("empal")) {
+  // 8. Check SOTO / GEPUK / EMPAL / DAGING
+  if (nameLower.includes("soto") || nameLower.includes("gepuk") || nameLower.includes("empal") || nameLower.includes("daging") || nameLower.includes("sapi")) {
     return {
-      recipeTitle: `Soto / Olahan Daging Sapi Pasundan (${cleanTitle})`,
+      recipeTitle: recipeName.trim() || "Soto Bandung / Empal Gepuk Pasundan",
       sundaCategory: "Olahan Daging Sapi",
       originStory: "Olahan daging sapi segar khas Pasundan berkaldu bening gurih dengan campuran irisan lobak putih renyah dan kacang kedelai goreng.",
       servings,
@@ -274,14 +362,14 @@ export function buildSmartSundaRecipe(recipeName: string, targetServings: number
       suggestedPricePerServing: 60000,
       marginPercent: "58%",
       ingredients: [
-        { name: `Daging Sapi Segar (${cleanTitle})`, qty: 100 * servings, unit: "gram", estimatedCost: 15000 * servings, note: "Rebus empuk potong dadu" },
+        { name: "Daging Sapi Segar (Has Dalam / Sandung Lamur)", qty: 100 * servings, unit: "gram", estimatedCost: 15000 * servings, note: "Rebus empuk potong dadu" },
         { name: "Lobak Putih Segar (Iris Tipis)", qty: 40 * servings, unit: "gram", estimatedCost: 1500 * servings, note: "Direbus terpisah dengan garam" },
         { name: "Kacang Kedelai Goreng Krenyes", qty: 20 * servings, unit: "gram", estimatedCost: 1500 * servings, note: "Taburan khas Pasundan" },
         { name: "Bumbu Rempah (Bawang, Serai, Jahe, Lengkuas)", qty: 25 * servings, unit: "gram", estimatedCost: 2000 * servings, note: "Tumis harum kaldu bening" },
         { name: "Daun Bawang, Seledri & Bawang Goreng", qty: 15 * servings, unit: "gram", estimatedCost: 1000 * servings, note: "Taburan wangi segar" }
       ],
       cookingSteps: [
-        { stepNumber: 1, instruction: `Rebus daging sapi ${cleanTitle} dalam air bersama daun salam dan serai hingga empuk.`, durationMins: 40, chefTip: "Saring air kaldu agar kuah tetap bening jernih." },
+        { stepNumber: 1, instruction: "Rebus daging sapi dalam air bersama daun salam dan serai hingga empuk.", durationMins: 40, chefTip: "Saring air kaldu agar kuah tetap bening jernih." },
         { stepNumber: 2, instruction: "Iris tipis lobak putih, remas dengan sedikit garam lalu cuci bersih dan rebus sebentar.", durationMins: 8, chefTip: "Proses meremas garam menghilangkan bau langur lobak." },
         { stepNumber: 3, instruction: "Tumis bawang putih, bawang merah, dan serai halus hingga wangi. Masukkan ke dalam kuah kaldu sapi mendidih.", durationMins: 10, chefTip: "Bumbu tumis membuat kuah gurih aromatik." },
         { stepNumber: 4, instruction: "Tata potongan daging dan lobak di mangkuk, siram kuah bening panas. Taburi kedelai goreng dan seledri.", durationMins: 3, chefTip: "Sajikan bersama emping renyah." }
@@ -291,9 +379,10 @@ export function buildSmartSundaRecipe(recipeName: string, targetServings: number
     };
   }
 
-  if (nameLower.includes("sambal") || nameLower.includes("cobek")) {
+  // 9. Check SAMBAL / COBEK
+  if (nameLower.includes("sambal") || nameLower.includes("cobek") || nameLower.includes("goang")) {
     return {
-      recipeTitle: `Sambal Dadak Limau Pasundan (${cleanTitle})`,
+      recipeTitle: recipeName.trim() || "Sambal Dadak Limau Pasundan",
       sundaCategory: "Sambal Khas Sunda",
       originStory: "Sambal khas Priangan yang diulek mentah secara dadakan saat dipesan, dipadukan dengan terasi udang bakar dan perasan jeruk limau yang menyegarkan.",
       servings,
@@ -318,7 +407,8 @@ export function buildSmartSundaRecipe(recipeName: string, targetServings: number
     };
   }
 
-  // Generic fallback generator tailored specifically to recipeName
+  // 10. Generic fallback for custom names
+  const cleanTitle = sanitizeSundaTitle(recipeName);
   return {
     recipeTitle: `${cleanTitle} Khas Saung Pasundan`,
     sundaCategory: "Olahan Kuliner Sunda",
@@ -328,7 +418,7 @@ export function buildSmartSundaRecipe(recipeName: string, targetServings: number
     suggestedPricePerServing: 55000,
     marginPercent: "60%",
     ingredients: [
-      { name: `${cleanTitle} (Bahan Utama Segar)`, qty: 150 * servings, unit: "gram", estimatedCost: 12000 * servings, note: "Bahan utama pilihan kualitas terbaik" },
+      { name: `${cleanTitle} (Bahan Segar Utama)`, qty: 150 * servings, unit: "gram", estimatedCost: 12000 * servings, note: "Bahan utama pilihan kualitas terbaik" },
       { name: "Bumbu Ulek Halus (Kencur, Bawang, Kunyit, Kemiri)", qty: 35 * servings, unit: "gram", estimatedCost: 2500 * servings, note: "Diulek tradisional dengan cobek batu" },
       { name: "Rempah Aromatik (Daun Salam, Sereh Memar, Lengkuas)", qty: 15 * servings, unit: "gram", estimatedCost: 1000 * servings, note: "Rempah segar melimpah" },
       { name: "Daun Kemangi & Cabai Rawit Merah", qty: 20 * servings, unit: "gram", estimatedCost: 1200 * servings, note: "Menambah aroma wangi dan kepedasan" },
@@ -347,11 +437,21 @@ export function buildSmartSundaRecipe(recipeName: string, targetServings: number
 
 export function normalizeSundaRecipeData(raw: any, defaultTitle: string, targetServings: number) {
   const servings = Number(raw?.servings || raw?.targetServings || targetServings) || 4;
-  const recipeTitle = raw?.recipeTitle || raw?.recipeName || raw?.title || defaultTitle || "Masakan Sunda Parahyangan";
+  let recipeTitle = raw?.recipeTitle || raw?.recipeName || raw?.title || defaultTitle || "Masakan Sunda Parahyangan";
   
+  const titleLower = recipeTitle.toLowerCase();
+  const isIdeaRequest = 
+    titleLower.includes("cari ide") || 
+    titleLower.includes("minta ide") || 
+    titleLower.includes("rekomendasi") ||
+    titleLower === "ide" ||
+    titleLower === "cari";
+
   const smartFallback = buildSmartSundaRecipe(recipeTitle, servings);
 
-  const ingredients = Array.isArray(raw?.ingredients) && raw.ingredients.length > 0
+  let finalTitle = isIdeaRequest ? smartFallback.recipeTitle : recipeTitle;
+
+  let ingredients = Array.isArray(raw?.ingredients) && raw.ingredients.length > 0
     ? raw.ingredients.map((ing: any, i: number) => ({
         name: ing.name || ing.bahan || `Bahan ${i + 1}`,
         qty: Number(ing.qty || ing.quantity || ing.qtyNeeded || 100),
@@ -360,6 +460,15 @@ export function normalizeSundaRecipeData(raw: any, defaultTitle: string, targetS
         note: ing.note || ing.chefTips || "Bahan pilihan segar"
       }))
     : smartFallback.ingredients;
+
+  // Safeguard: Check if ingredients contain invalid keywords like "cari ide" or mismatching protein
+  const hasInvalidIngName = ingredients.some((ing: any) => ing.name && ing.name.toLowerCase().includes("cari ide"));
+  const titleHasChicken = finalTitle.toLowerCase().includes("ayam") || finalTitle.toLowerCase().includes("bekakak");
+  const ingHasFish = ingredients.some((ing: any) => ing.name && (ing.name.toLowerCase().includes("gurame") || ing.name.toLowerCase().includes("nila")));
+
+  if (hasInvalidIngName || (titleHasChicken && ingHasFish)) {
+    ingredients = smartFallback.ingredients;
+  }
 
   const rawSteps = raw?.cookingSteps || raw?.steps;
   const cookingSteps = Array.isArray(rawSteps) && rawSteps.length > 0
@@ -379,10 +488,15 @@ export function normalizeSundaRecipeData(raw: any, defaultTitle: string, targetS
   const estimatedHppPerServing = Number(raw?.estimatedHppPerServing || raw?.hpp || smartFallback.estimatedHppPerServing);
   const suggestedPricePerServing = Number(raw?.suggestedPricePerServing || raw?.price || Math.round(estimatedHppPerServing * 2.8));
 
+  let originStory = raw?.originStory;
+  if (!originStory || originStory.toLowerCase().includes("cari ide") || (titleHasChicken && originStory.toLowerCase().includes("ikan"))) {
+    originStory = smartFallback.originStory;
+  }
+
   return {
-    recipeTitle,
+    recipeTitle: finalTitle,
     sundaCategory: raw?.sundaCategory || raw?.category || smartFallback.sundaCategory,
-    originStory: raw?.originStory || smartFallback.originStory,
+    originStory,
     servings,
     estimatedHppPerServing,
     suggestedPricePerServing,
