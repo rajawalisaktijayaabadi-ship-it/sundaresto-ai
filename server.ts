@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { buildSmartSundaRecipe, normalizeSundaRecipeData } from "./src/utils/geminiClient.js";
 
 dotenv.config();
 
@@ -221,75 +222,41 @@ async function startServer() {
       return res.status(400).json({ error: "Nama masakan Sunda diperlukan" });
     }
 
-    const fallbackRecipe = {
-      recipeTitle: recipeName.includes("Gurame")
-        ? "Gurame Bakar Bumbu Rujak Pasundan"
-        : recipeName.includes("Liwet")
-        ? "Nasi Liwet Kastrol Rempah Saung"
-        : recipeName.includes("Pepes")
-        ? "Pepes Ikan Mas Bumbu Kuning Kemangi"
-        : recipeName.includes("Sayur Asem")
-        ? "Sayur Asem Komplit Priangan"
-        : recipeName.includes("Sambal")
-        ? "Sambal Dadak Limau & Goang Hijau"
-        : recipeName,
-      sundaCategory: recipeName.includes("Gurame")
-        ? "Olahan Gurame & Nila"
-        : recipeName.includes("Liwet")
-        ? "Nasi & Paket Liwet"
-        : recipeName.includes("Pepes")
-        ? "Pepes Khas Sunda"
-        : recipeName.includes("Sayur")
-        ? "Sayuran & Sup"
-        : "Sambal Khas Sunda",
-      originStory: `Masakan khas Priangan yang autentik dengan keharmonisan rasa gurih, pedas segar, dan aroma rempah harum yang dimasak secara tradisional.`,
-      servings: Number(targetServings) || 4,
-      estimatedHppPerServing: 22000,
-      suggestedPricePerServing: 65000,
-      marginPercent: "66%",
-      ingredients: [
-        { name: "Bahan Utama (Ikan/Ayam/Beras/Bahan)", qty: 500, unit: "gram", estimatedCost: 15000, note: "Pilihan segar kualitas terbaik" },
-        { name: "Bumbu Halus (Kencur, Bawang, Kunyit, Cabai)", qty: 80, unit: "gram", estimatedCost: 4000, note: "Haluskan dengan ulekan batu" },
-        { name: "Daun Kemangi & Salam Sereh", qty: 30, unit: "gram", estimatedCost: 1500, note: "Petik segar sebelum dimasak" },
-        { name: "Jeruk Limau & Terasi Bakar", qty: 2, unit: "buah", estimatedCost: 1500, note: "Untuk aroma wangi segar khas Sunda" }
-      ],
-      cookingSteps: [
-        { stepNumber: 1, instruction: "Bersihkan bahan utama, baluri perasan jeruk nipis dan garam halus. Diamkan 10 menit.", durationMins: 10, chefTip: "Perasan nipis meresap menghilangkan bau amis." },
-        { stepNumber: 2, instruction: "Tumis bumbu halus khas Sunda bersama daun salam, sereh, dan kencur hingga harum dan berminyak.", durationMins: 8, chefTip: "Gunakan api sedang agar bumbu matang merata tanpa gosong." },
-        { stepNumber: 3, instruction: "Ungkep atau panggang bahan utama bersama bumbu olesan rempah hingga bumbu meresap ke dalam serat.", durationMins: 20, chefTip: "Olesi mentega/kecap manis di 5 menit terakhir pemanggangan." },
-        { stepNumber: 4, instruction: "Angkat dan sajikan hangat di atas tampah beralaskan daun pisang bersama lalapan leunca & kemangi.", durationMins: 2, chefTip: "Sajikan bersama cobek sambal dadak segar." }
-      ],
-      servingStyle: "Disajikan di atas tampah beralas daun pisang atau kastrol hangat, lengkap dengan lalapan segar (leunca, timun, kemangi, terong bulat) dan cobek sambal dadak.",
-      pairingRecommendation: "Sangat pas disandingkan dengan Es Kelapa Muda Jeruk & Kerupuk Aci khas Parahyangan."
-    };
+    const fallbackRecipe = buildSmartSundaRecipe(recipeName, Number(targetServings) || 4);
 
     if (!getAiClient(customApiKey)) {
       return res.json({ success: true, isMock: true, data: fallbackRecipe });
     }
 
     try {
-      const systemInstruction = `Anda adalah Koki Pakar Kuliner Sunda & Master Chef Rumah Makan Lesehan Sunda. 
-Buatkan resep masakan Sunda lengkap, autentik, dan presisi untuk bisnis restoran.
-Kembalikan respon JSON persis berformat:
+      const systemInstruction = `Anda adalah Executive Chef Spesialis Kuliner Sunda Parahyangan.
+Tugas Anda adalah membuat resep masakan Sunda otentik, spesifik, dan presisi tinggi untuk bisnis restoran/saung lesehan.`;
+
+      const promptText = `Buatkan resep masakan Sunda otentik & presisi untuk hidangan: "${recipeName}" porsi: ${targetServings} porsi.
+
+PENTING & WAJIB:
+- Tuliskan NAMA BAHAN SPESIFIK & REALISTIS untuk hidangan "${recipeName}".
+  (Contoh: jika Nasi Liwet sebutkan "Beras Cianjur", "Teri Medan", "Daun Salam", "Sereh"; jika Karedok sebutkan "Kacang Panjang", "Terong Bulat", "Tauge Mentah", "Kacang Tanah", "Kencur"; jika Gurame Bakar sebutkan "Ikan Gurame Segar", "Kecap Manis", "Ketumbar", "Jeruk Limau"; dsb).
+- JANGAN GUNAKAN nama generik seperti "Bahan Utama" atau "Bahan 1".
+
+Kembalikan HANYA JSON valid berformat:
 {
-  "recipeTitle": "string",
-  "sundaCategory": "string (Paket Menu Komplit | Nasi Liwet | Ayam & Bebek | Olahan Ikan | Pepes Khas Sunda | Tumisan & Cah | Sayuran & Sup | Sambal Khas Sunda)",
-  "originStory": "string (penjelasan filosofi/keautentikan masakan Sunda ini dalam 2 kalimat)",
-  "servings": number,
-  "estimatedHppPerServing": number (dalam Rupiah, misal 22000),
-  "suggestedPricePerServing": number (dalam Rupiah, misal 65000),
-  "marginPercent": "string (misal 66%)",
+  "recipeTitle": "${recipeName}",
+  "sundaCategory": "Nasi & Paket Liwet / Olahan Ikan / Sayuran & Sup / Pepes / Sambal",
+  "originStory": "Filosofi keautentikan hidangan ini dalam 2 kalimat khas Sunda",
+  "servings": ${targetServings},
+  "estimatedHppPerServing": 22000,
+  "suggestedPricePerServing": 65000,
+  "marginPercent": "66%",
   "ingredients": [
-    { "name": "string", "qty": number, "unit": "string (gram|ml|ekor|porsi|buah)", "estimatedCost": number, "note": "string" }
+    { "name": "Nama Bahan Spesifik", "qty": 100, "unit": "gram/ml/buah/ekor", "estimatedCost": 5000, "note": "catatan koki" }
   ],
   "cookingSteps": [
-    { "stepNumber": number, "instruction": "string", "durationMins": number, "chefTip": "string" }
+    { "stepNumber": 1, "instruction": "Langkah spesifik memasak", "durationMins": 10, "chefTip": "Tips koki" }
   ],
-  "servingStyle": "string (saran penyajian di saung lesehan)",
-  "pairingRecommendation": "string (saran minuman/pencuci mulut)"
+  "servingStyle": "Saran penyajian di saung lesehan Sunda",
+  "pairingRecommendation": "Rekomendasi minuman/pencuci mulut"
 }`;
-
-      const promptText = `Buatkan resep masakan Sunda autentik: "${recipeName}" untuk porsi: ${targetServings} porsi. Sertakan rincian bahan presisi, estimasi HPP per porsi, dan langkah memasak ala koki Sunda.`;
 
       const responseText = await generateGeminiContentWithFallback({
         contents: promptText,
@@ -307,10 +274,12 @@ Kembalikan respon JSON persis berformat:
         parsedData = fallbackRecipe;
       }
 
+      const normalized = normalizeSundaRecipeData(parsedData, recipeName, Number(targetServings) || 4);
+
       return res.json({
         success: true,
         isMock: false,
-        data: parsedData,
+        data: normalized,
       });
     } catch (err: any) {
       console.error("Error generating Sunda recipe with Gemini:", err);
