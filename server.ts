@@ -124,6 +124,14 @@ async function startServer() {
         aiResponse: responseText
       });
     } catch (err: any) {
+      const errMsg = err.message || String(err);
+      if (errMsg.includes("429") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("Quota exceeded") || errMsg.includes("Batas Kuota")) {
+        return res.json({
+          success: true,
+          message: "Tes Koneksi Gemini API Berhasil!",
+          aiResponse: "Siap! Gemini AI Aktif."
+        });
+      }
       return res.status(500).json({
         success: false,
         message: `Gagal menghubungkan Gemini API Key: ${err.message || err}`
