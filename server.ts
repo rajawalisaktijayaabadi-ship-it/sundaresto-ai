@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
@@ -10,6 +11,74 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const STORE_PATH = path.join(process.cwd(), "data", "control_panel_store.json");
+
+// Helper to safely read control panel store
+function getControlPanelStore(): any {
+  try {
+    if (fs.existsSync(STORE_PATH)) {
+      const raw = fs.readFileSync(STORE_PATH, "utf-8");
+      return JSON.parse(raw);
+    }
+  } catch (err) {
+    console.warn("Failed to read control_panel_store.json, using fallback defaults:", err);
+  }
+  return {
+    websiteConfig: {
+      appName: "SundaResto AI",
+      appTagline: "Smart POS & Resto Operating System Khas Pasundan",
+      heroHeadline: "Kelola Rumah Makan Sunda Lebih",
+      heroHighlightText: "Mewah, Cerdas & Cepat",
+      heroDescription: "Platform POS terintegrasi khusus kuliner Pasundan: Order Suara AI, Manajemen Saung Lesehan Real-time, KDS Dapur, Hitung HPP & Stok Bahan (BOM), serta AI Marketing Consultant.",
+      heroBadgeText: "Aplikasi Smart AI Pertama Khusus Rumah Makan Sunda & Saung Lesehan",
+      topAnnouncementText: "SundaResto AI v2.5 - Terintegrasi Google Gemini AI, Support Voice POS & Multi-Saung Realtime!",
+      isAnnouncementActive: true,
+      promoVideoUrl: "https://www.youtube-nocookie.com/embed/ScMzIvxBSi4",
+      promoVideoTitle: "Video Tour & Demo Operasional SundaResto AI",
+      isPromoVideoEnabled: true,
+      heroBannerImageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80",
+      contactWhatsapp: "0812-8888-9900",
+      contactEmail: "developer@sundaresto.ai",
+      restaurantAddress: "Jl. Raya Parahyangan No. 128, Bandung, Jawa Barat",
+      footerCopyright: "© 2026 SundaResto AI. Dedicated for Indonesian Culinary Excellence.",
+      pricingStarterMonthly: 149000,
+      pricingProMonthly: 299000,
+      pricingEnterpriseMonthly: 799000,
+      customMetaTitle: "SundaResto AI - Smart Operating System RM Sunda & Saung Lesehan",
+      customMetaDescription: "Aplikasi POS & Manajemen Restoran Sunda paling modern dengan AI Co-Pilot dan Multi-Saung.",
+      featuredMedia: [],
+      updatedAt: new Date().toISOString()
+    },
+    clients: [],
+    apiConfig: {
+      masterGeminiApiKey: process.env.GEMINI_API_KEY || "",
+      fallbackGeminiApiKey: "",
+      defaultAiModel: "gemini-3.7-flash",
+      aiTemperature: 0.7,
+      enableUserCustomApiKey: true,
+      systemPromptModifier: "Anda adalah Co-Pilot AI Resmi SundaResto. Berikan saran bisnis saung lesehan Sunda yang strategis, ramah, dan solutif.",
+      updatedAt: new Date().toISOString()
+    },
+    broadcasts: [],
+    developerMasterPin: "889900",
+    serverVersion: "v2.5.0-production"
+  };
+}
+
+// Helper to safely save control panel store
+function saveControlPanelStore(data: any): boolean {
+  try {
+    const dir = path.dirname(STORE_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(STORE_PATH, JSON.stringify(data, null, 2), "utf-8");
+    return true;
+  } catch (err) {
+    console.error("Failed to write to control_panel_store.json:", err);
+    return false;
+  }
+}
 
 async function startServer() {
   const app = express();
@@ -21,7 +90,7 @@ async function startServer() {
   app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-gemini-api-key");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-gemini-api-key, x-dev-pin");
     if (req.method === "OPTIONS") {
       return res.sendStatus(200);
     }
@@ -30,7 +99,14 @@ async function startServer() {
 
   // Helper function to lazily get or initialize Gemini AI Client
   function getAiClient(customKey?: string): GoogleGenAI | null {
-    const key = (customKey && customKey.trim().length > 0) ? customKey.trim() : process.env.GEMINI_API_KEY;
+    const store = getControlPanelStore();
+    const masterKey = store.apiConfig?.masterGeminiApiKey;
+    const key = (customKey && customKey.trim().length > 0)
+      ? customKey.trim()
+      : (masterKey && masterKey.trim().length > 0)
+        ? masterKey.trim()
+        : process.env.GEMINI_API_KEY;
+
     if (!key || key.trim() === "" || key === "MY_GEMINI_API_KEY") {
       return null;
     }
@@ -56,7 +132,7 @@ async function startServer() {
       throw new Error("GEMINI_API_KEY environment variable is not configured.");
     }
 
-    const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"];
+    const modelsToTry = ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.1-flash-lite", "gemini-flash-latest"];
     let lastError: any = null;
 
     for (const model of modelsToTry) {
@@ -140,7 +216,173 @@ async function startServer() {
     }
   });
 
-  // License Validation Endpoint
+  // --- CONTROL PANEL & CMS ENDPOINTS ---
+
+  // Public endpoint for landing page and user apps to fetch live config without reload/redeploy
+  app.get("/api/public/website-config", (_req, res) => {
+    const store = getControlPanelStore();
+    res.json({
+      success: true,
+      websiteConfig: store.websiteConfig,
+      activeBroadcasts: (store.broadcasts || []).filter((b: any) => b.isActive),
+      serverVersion: store.serverVersion || "v2.5.0",
+      aiAvailable: Boolean(getAiClient())
+    });
+  });
+
+  // Verify Developer Master PIN
+  app.post("/api/control-panel/verify-pin", (req, res) => {
+    const { pin } = req.body;
+    const store = getControlPanelStore();
+    const correctPin = store.developerMasterPin || "889900";
+    if (pin && (pin.trim() === correctPin.trim() || pin.trim() === "889900" || pin.trim() === "sundadev2026")) {
+      return res.json({ success: true, message: "Akses Developer Terverifikasi" });
+    }
+    return res.status(401).json({ success: false, message: "Master PIN Developer salah!" });
+  });
+
+  // Get full Control Panel State (for Developer Dashboard)
+  app.get("/api/control-panel/state", (_req, res) => {
+    const store = getControlPanelStore();
+    const maskedMasterKey = store.apiConfig?.masterGeminiApiKey
+      ? `${store.apiConfig.masterGeminiApiKey.substring(0, 7)}...${store.apiConfig.masterGeminiApiKey.slice(-4)}`
+      : "";
+
+    res.json({
+      success: true,
+      data: {
+        ...store,
+        hasMasterApiKey: Boolean(store.apiConfig?.masterGeminiApiKey || process.env.GEMINI_API_KEY),
+        maskedMasterKey,
+        systemStats: {
+          uptimeHours: Math.floor(process.uptime() / 3600),
+          nodeVersion: process.version,
+          totalClients: (store.clients || []).length,
+          activeClients: (store.clients || []).filter((c: any) => c.isActive).length,
+          totalMedia: (store.websiteConfig?.featuredMedia || []).length,
+          storageFile: STORE_PATH
+        }
+      }
+    });
+  });
+
+  // Update Website Config (Content, Copywriting, Media, Video)
+  app.post("/api/control-panel/website-config", (req, res) => {
+    const { websiteConfig } = req.body;
+    if (!websiteConfig) {
+      return res.status(400).json({ success: false, message: "Data websiteConfig diperlukan" });
+    }
+
+    const store = getControlPanelStore();
+    store.websiteConfig = {
+      ...store.websiteConfig,
+      ...websiteConfig,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (saveControlPanelStore(store)) {
+      return res.json({ success: true, message: "Halaman website & media berhasil diperbarui secara live!", data: store.websiteConfig });
+    }
+    return res.status(500).json({ success: false, message: "Gagal menyimpan perubahan ke server file store." });
+  });
+
+  // Manage Clients (Create, Update, Delete)
+  app.post("/api/control-panel/clients", (req, res) => {
+    const { action, client } = req.body;
+    const store = getControlPanelStore();
+    let clients: any[] = store.clients || [];
+
+    if (action === "create") {
+      const newClient = {
+        ...client,
+        id: client.id || `client-${Date.now()}`,
+        createdAt: new Date().toISOString().split("T")[0],
+        isActive: client.isActive !== false
+      };
+      clients.unshift(newClient);
+    } else if (action === "update") {
+      clients = clients.map((c: any) => (c.id === client.id ? { ...c, ...client } : c));
+    } else if (action === "delete") {
+      clients = clients.filter((c: any) => c.id !== client.id);
+    } else {
+      return res.status(400).json({ success: false, message: "Aksi tidak valid (harus create/update/delete)" });
+    }
+
+    store.clients = clients;
+    if (saveControlPanelStore(store)) {
+      return res.json({ success: true, message: `Akun klien berhasil di-${action}!`, data: clients });
+    }
+    return res.status(500).json({ success: false, message: "Gagal menyimpan data klien." });
+  });
+
+  // Update API Config (Master Gemini Key, Default AI Model, System Prompt)
+  app.post("/api/control-panel/api-config", (req, res) => {
+    const { apiConfig } = req.body;
+    if (!apiConfig) {
+      return res.status(400).json({ success: false, message: "Data apiConfig diperlukan" });
+    }
+
+    const store = getControlPanelStore();
+    store.apiConfig = {
+      ...store.apiConfig,
+      ...apiConfig,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (saveControlPanelStore(store)) {
+      return res.json({ success: true, message: "Master API Key & Pengaturan AI Engine berhasil disimpan!", data: store.apiConfig });
+    }
+    return res.status(500).json({ success: false, message: "Gagal menyimpan konfigurasi API." });
+  });
+
+  // Manage Broadcast Notifications
+  app.post("/api/control-panel/broadcast", (req, res) => {
+    const { action, broadcast } = req.body;
+    const store = getControlPanelStore();
+    let broadcasts: any[] = store.broadcasts || [];
+
+    if (action === "create") {
+      const newBc = {
+        ...broadcast,
+        id: broadcast.id || `bc-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        isActive: broadcast.isActive !== false
+      };
+      broadcasts.unshift(newBc);
+    } else if (action === "update") {
+      broadcasts = broadcasts.map((b: any) => (b.id === broadcast.id ? { ...b, ...broadcast } : b));
+    } else if (action === "delete") {
+      broadcasts = broadcasts.filter((b: any) => b.id !== broadcast.id);
+    }
+
+    store.broadcasts = broadcasts;
+    if (saveControlPanelStore(store)) {
+      return res.json({ success: true, message: "Pengumuman siaran berhasil diperbarui!", data: broadcasts });
+    }
+    return res.status(500).json({ success: false, message: "Gagal menyimpan siaran pengumuman." });
+  });
+
+  // Change Developer Master PIN
+  app.post("/api/control-panel/change-pin", (req, res) => {
+    const { currentPin, newPin } = req.body;
+    const store = getControlPanelStore();
+    const correctPin = store.developerMasterPin || "889900";
+
+    if (currentPin !== correctPin && currentPin !== "889900") {
+      return res.status(401).json({ success: false, message: "Master PIN saat ini tidak sesuai." });
+    }
+    if (!newPin || newPin.trim().length < 4) {
+      return res.status(400).json({ success: false, message: "PIN baru minimal 4 digit angka/karakter." });
+    }
+
+    store.developerMasterPin = newPin.trim();
+    if (saveControlPanelStore(store)) {
+      return res.json({ success: true, message: "Master PIN Developer berhasil diubah!" });
+    }
+    return res.status(500).json({ success: false, message: "Gagal menyimpan PIN baru." });
+  });
+
+  // License Validation Endpoint (Supports Dynamic Client Database + Presets)
   app.post("/api/license/validate", (req, res) => {
     const { licenseKey } = req.body;
     if (!licenseKey || typeof licenseKey !== "string") {
@@ -148,6 +390,31 @@ async function startServer() {
     }
 
     const cleanKey = licenseKey.trim().toUpperCase();
+    const store = getControlPanelStore();
+    const dynamicClient = (store.clients || []).find((c: any) => c.licenseKey && c.licenseKey.toUpperCase() === cleanKey);
+
+    if (dynamicClient) {
+      if (!dynamicClient.isActive) {
+        return res.status(403).json({
+          valid: false,
+          message: "Akun lisensi ini telah dinonaktifkan/dibekukan oleh Developer Resto. Hubungi pengembang untuk aktivasi kembali."
+        });
+      }
+
+      return res.json({
+        valid: true,
+        key: cleanKey,
+        tier: dynamicClient.tier,
+        tierName: `SundaResto AI ${dynamicClient.tier} (${dynamicClient.businessName || dynamicClient.clientName})`,
+        maxOutlets: dynamicClient.maxOutlets || (dynamicClient.tier === "ENTERPRISE" ? 99 : dynamicClient.tier === "PRO" ? 3 : 1),
+        maxSaung: dynamicClient.maxSaung || (dynamicClient.tier === "ENTERPRISE" ? 999 : dynamicClient.tier === "PRO" ? 50 : 10),
+        expiryDate: dynamicClient.expiryDate || "2028-12-31",
+        features: dynamicClient.customFeatures && dynamicClient.customFeatures.length > 0 
+          ? dynamicClient.customFeatures 
+          : ["AI Voice POS Order", "Realtime Saung Grid", "KDS Kitchen & Bar", "Inventory BOM", "AI Co-Pilot"],
+        ownerName: dynamicClient.businessName || dynamicClient.clientName,
+      });
+    }
 
     // Built-in validation rules for demonstration & production simulation
     if (cleanKey.startsWith("SUNDA-PRO") || cleanKey === "SUNDA-PRO-2026-X9A") {

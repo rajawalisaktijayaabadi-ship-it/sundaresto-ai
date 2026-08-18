@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Sparkles,
   Bot,
@@ -15,28 +15,79 @@ import {
   ChefHat,
   Receipt,
   Zap,
-  Users
+  Users,
+  Play,
+  Film,
+  Image as ImageIcon,
+  ShieldAlert,
+  Radio,
+  Phone,
+  Mail,
+  MapPin
 } from "lucide-react";
 import { formatRupiah } from "../utils/formatters";
+import { WebsiteConfig, MediaItem, BroadcastNotification } from "../types/controlPanel";
 
 interface LandingPageProps {
   onOpenLogin: () => void;
   onQuickDemo: (tier: "BASIC" | "PRO" | "ENTERPRISE") => void;
+  onOpenDeveloperControlPanel?: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onOpenLogin, onQuickDemo }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({
+  onOpenLogin,
+  onQuickDemo,
+  onOpenDeveloperControlPanel
+}) => {
   const [selectedPlan, setSelectedPlan] = useState<"PRO" | "ENTERPRISE">("PRO");
+  const [liveConfig, setLiveConfig] = useState<WebsiteConfig | null>(null);
+  const [activeBroadcasts, setActiveBroadcasts] = useState<BroadcastNotification[]>([]);
+  const [galleryFilter, setGalleryFilter] = useState<"all" | "food" | "saung">("all");
+
+  // Fetch live website content from server CMS
+  useEffect(() => {
+    const fetchLiveWebsiteConfig = async () => {
+      try {
+        const res = await fetch("/api/public/website-config");
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.websiteConfig) {
+            setLiveConfig(json.websiteConfig);
+            setActiveBroadcasts(json.activeBroadcasts || []);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch live website config, using defaults:", err);
+      }
+    };
+    fetchLiveWebsiteConfig();
+  }, []);
+
+  // Filtered media items from live CMS
+  const mediaItems = liveConfig?.featuredMedia || [];
+  const displayedMedia = mediaItems.filter((m) => {
+    if (!m.isActive) return false;
+    if (galleryFilter === "food") return m.placement === "gallery_food";
+    if (galleryFilter === "saung") return m.placement === "gallery_saung";
+    return true;
+  });
 
   return (
     <div className="min-w-full min-h-screen bg-stone-950 text-stone-100 font-sans selection:bg-amber-500 selection:text-stone-950">
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-emerald-900 via-amber-700 to-emerald-950 px-4 py-2 text-center text-xs md:text-sm font-semibold text-amber-200 border-b border-amber-500/20 flex items-center justify-center gap-2">
-        <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
-        <span>SundaResto AI v2.5 - Terintegrasi Google Gemini AI, Support Voice POS & Multi-Saung</span>
-        <span className="hidden md:inline bg-amber-400/20 px-2 py-0.5 rounded text-[10px] text-amber-300 border border-amber-400/30">
-          Ready for Indonesia Market
-        </span>
-      </div>
+      {/* Top Banner (Live from CMS) */}
+      {(liveConfig?.isAnnouncementActive !== false || activeBroadcasts.length > 0) && (
+        <div className="bg-gradient-to-r from-emerald-900 via-amber-700 to-emerald-950 px-4 py-2 text-center text-xs md:text-sm font-semibold text-amber-200 border-b border-amber-500/20 flex items-center justify-center gap-2 flex-wrap">
+          <Sparkles className="w-4 h-4 text-amber-300 animate-pulse shrink-0" />
+          <span>
+            {activeBroadcasts[0]?.message ||
+              liveConfig?.topAnnouncementText ||
+              "SundaResto AI v2.5 - Terintegrasi Google Gemini AI, Support Voice POS & Multi-Saung"}
+          </span>
+          <span className="hidden md:inline bg-amber-400/20 px-2 py-0.5 rounded text-[10px] text-amber-300 border border-amber-400/30">
+            Live Server CMS
+          </span>
+        </div>
+      )}
 
       {/* Navigation Header */}
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between border-b border-stone-800/80 sticky top-0 bg-stone-950/90 backdrop-blur-md z-40">
@@ -46,53 +97,72 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenLogin, onQuickDe
           </div>
           <div>
             <h1 className="font-serif font-bold text-xl tracking-wide bg-gradient-to-r from-amber-200 via-amber-400 to-emerald-200 bg-clip-text text-transparent">
-              SundaResto <span className="font-sans font-extrabold text-amber-400 text-sm px-1.5 py-0.5 bg-amber-400/10 rounded border border-amber-400/30 ml-1">AI</span>
+              {liveConfig?.appName || "SundaResto"} <span className="font-sans font-extrabold text-amber-400 text-sm px-1.5 py-0.5 bg-amber-400/10 rounded border border-amber-400/30 ml-1">AI</span>
             </h1>
-            <p className="text-[10px] text-stone-400 tracking-wider uppercase">Smart POS & Resto Operating System</p>
+            <p className="text-[10px] text-stone-400 tracking-wider uppercase">
+              {liveConfig?.appTagline || "Smart POS & Resto Operating System"}
+            </p>
           </div>
         </div>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-stone-300">
           <a href="#fitur" className="hover:text-amber-400 transition">Fitur Utama</a>
-          <a href="#ai-copilot" className="hover:text-amber-400 transition">AI Features</a>
+          <a href="#demo-video" className="hover:text-amber-400 transition">Video Demo</a>
+          <a href="#galeri" className="hover:text-amber-400 transition">Galeri Resto</a>
           <a href="#harga" className="hover:text-amber-400 transition">Pricing</a>
           <a href="#faq" className="hover:text-amber-400 transition">FAQ</a>
-          <a href="#testimoni" className="hover:text-amber-400 transition">Testimoni</a>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {onOpenDeveloperControlPanel && (
+            <button
+              onClick={onOpenDeveloperControlPanel}
+              className="px-3 py-2 text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl transition flex items-center gap-1.5"
+              title="Akses Developer & Control Panel (Edit Post-Deploy)"
+            >
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Developer Panel</span>
+            </button>
+          )}
+
           <button
             onClick={onOpenLogin}
-            className="px-4 py-2 text-sm font-semibold text-stone-200 hover:text-white hover:bg-stone-800 rounded-xl border border-stone-700 transition"
+            className="px-3.5 py-2 text-xs sm:text-sm font-semibold text-stone-200 hover:text-white hover:bg-stone-800 rounded-xl border border-stone-700 transition"
           >
             Aktivasi Lisensi
           </button>
+
           <button
             onClick={() => onQuickDemo("PRO")}
-            className="px-5 py-2 text-sm font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-stone-950 rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2 transition"
+            className="px-4 sm:px-5 py-2 text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-stone-950 rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-1.5 transition"
           >
             <Zap className="w-4 h-4" />
-            Coba Demo
+            <span>Coba Demo</span>
           </button>
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section (Live Dynamic Copywriting) */}
       <section className="relative pt-12 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center overflow-hidden">
         {/* Background Ambient Glow */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-emerald-900/30 to-amber-600/20 rounded-full blur-3xl -z-10"></div>
 
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 text-xs font-semibold mb-6 shadow-xl">
           <Bot className="w-4 h-4 text-amber-400" />
-          <span>Aplikasi Smart AI Pertama Khusus Rumah Makan Sunda & Saung Lesehan</span>
+          <span>{liveConfig?.heroBadgeText || "Aplikasi Smart AI Pertama Khusus Rumah Makan Sunda & Saung Lesehan"}</span>
         </div>
 
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-extrabold tracking-tight text-amber-100 max-w-4xl mx-auto leading-tight">
-          Kelola Rumah Makan Sunda Lebih <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-emerald-300 bg-clip-text text-transparent">Mewah, Cerdas & Cepat</span> dengan AI
+          {liveConfig?.heroHeadline || "Kelola Rumah Makan Sunda Lebih"}{" "}
+          <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-emerald-300 bg-clip-text text-transparent">
+            {liveConfig?.heroHighlightText || "Mewah, Cerdas & Cepat"}
+          </span>{" "}
+          dengan AI
         </h1>
 
         <p className="mt-6 text-base sm:text-lg text-stone-300 max-w-2xl mx-auto font-light leading-relaxed">
-          Platform POS terintegrasi khusus kuliner Pasundan: Order Suara AI, Manajemen Saung Lesehan Real-time, KDS Dapur, Hitung HPP & Stok Bahan (BOM), serta AI Marketing Consultant.
+          {liveConfig?.heroDescription ||
+            "Platform POS terintegrasi khusus kuliner Pasundan: Order Suara AI, Manajemen Saung Lesehan Real-time, KDS Dapur, Hitung HPP & Stok Bahan (BOM), serta AI Marketing Consultant."}
         </p>
 
         {/* CTA Buttons */}
@@ -133,299 +203,290 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onOpenLogin, onQuickDe
             <span>Single & Multi-Outlet</span>
           </div>
         </div>
-
-        {/* Live Mock Dashboard Preview Card */}
-        <div className="mt-12 relative max-w-5xl mx-auto rounded-3xl border border-amber-500/30 bg-stone-900/90 shadow-2xl p-4 sm:p-6 text-left overflow-hidden">
-          <div className="flex items-center justify-between pb-4 border-b border-stone-800">
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-rose-500"></div>
-              <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-              <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-              <span className="text-xs font-mono text-stone-400 ml-2">RM Saung Pasundan Dago - Live POS System</span>
-            </div>
-            <span className="text-xs font-semibold text-emerald-400 bg-emerald-950 px-3 py-1 rounded-full border border-emerald-500/30">
-              ● PRO LICENSE ACTIVE
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-            {/* Saung Grid Preview */}
-            <div className="bg-stone-950 p-4 rounded-xl border border-stone-800 space-y-3">
-              <div className="flex items-center justify-between text-xs font-bold text-amber-200">
-                <span className="flex items-center gap-1.5"><LayoutGrid className="w-4 h-4 text-amber-400" /> Denah Saung & Meja</span>
-                <span className="text-emerald-400 font-mono">12 Saung</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                <div className="bg-emerald-950/80 border border-emerald-500/40 p-2 rounded-lg text-emerald-200 font-bold">Saung 01<div className="text-[10px] text-stone-400">Isi</div></div>
-                <div className="bg-amber-950/80 border border-amber-500/40 p-2 rounded-lg text-amber-200 font-bold">Saung 02<div className="text-[10px] text-stone-400">Masak</div></div>
-                <div className="bg-stone-900 border border-stone-800 p-2 rounded-lg text-stone-300 font-semibold">Saung 03<div className="text-[10px] text-emerald-400">Kosong</div></div>
-                <div className="bg-sky-950/80 border border-sky-500/40 p-2 rounded-lg text-sky-200 font-bold">Saung 04<div className="text-[10px] text-stone-400">Bill</div></div>
-                <div className="bg-purple-950/80 border border-purple-500/40 p-2 rounded-lg text-purple-200 font-bold">Saung 05<div className="text-[10px] text-stone-400">Booked</div></div>
-                <div className="bg-stone-900 border border-stone-800 p-2 rounded-lg text-stone-300 font-semibold">Saung 06<div className="text-[10px] text-emerald-400">Kosong</div></div>
-              </div>
-            </div>
-
-            {/* Smart Voice AI Input Preview */}
-            <div className="bg-stone-950 p-4 rounded-xl border border-stone-800 space-y-3">
-              <div className="flex items-center justify-between text-xs font-bold text-amber-200">
-                <span className="flex items-center gap-1.5"><Bot className="w-4 h-4 text-emerald-400" /> AI Voice & Text Order</span>
-                <span className="text-amber-400 text-[10px] bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/30">Gemini 3.6</span>
-              </div>
-              <div className="bg-stone-900 p-3 rounded-lg border border-stone-800 text-xs text-stone-300 italic">
-                "Pesan 2 Nasi Liwet Saung 04, 1 Gurame Bakar Kecap pedas sedang, 3 Es Teh Manis Jumbo..."
-              </div>
-              <div className="text-[11px] bg-emerald-950/60 p-2.5 rounded-lg border border-emerald-500/30 text-emerald-200 font-medium">
-                ✓ Auto-Parsed ke Saung 04 (3 Menu, Total Rp 202.000)
-              </div>
-            </div>
-
-            {/* Daily KPI Preview */}
-            <div className="bg-stone-950 p-4 rounded-xl border border-stone-800 space-y-3">
-              <div className="flex items-center justify-between text-xs font-bold text-amber-200">
-                <span className="flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-emerald-400" /> Ringkasan Hari Ini</span>
-                <span className="text-stone-400 text-[10px]">9 Ags 2026</span>
-              </div>
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between items-center bg-stone-900 p-2 rounded-lg">
-                  <span className="text-stone-400">Omset Penjualan:</span>
-                  <span className="font-bold text-emerald-400 font-mono">Rp 14.850.000</span>
-                </div>
-                <div className="flex justify-between items-center bg-stone-900 p-2 rounded-lg">
-                  <span className="text-stone-400">Total Pesanan:</span>
-                  <span className="font-bold text-amber-200 font-mono">42 Transaksi</span>
-                </div>
-                <div className="flex justify-between items-center bg-stone-900 p-2 rounded-lg">
-                  <span className="text-stone-400">Menu Terlaris:</span>
-                  <span className="font-semibold text-amber-300">Gurame Bakar</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
-      {/* Feature Section */}
-      <section id="fitur" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-stone-800/80">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-xs uppercase tracking-widest text-amber-400 font-bold mb-2">Fitur Terlengkap Restoran Sunda</h2>
-          <p className="text-3xl font-serif font-bold text-amber-100">Dirancang Khusus Alur Rumah Makan Sunda & Saung Lesehan</p>
-          <p className="mt-3 text-stone-400 text-sm">Semua modul saling terintegrasi otomatis: POS, Saung, Dapur, Stok Bahan, hingga Laporan Keuangan.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div className="bg-stone-900/60 p-6 rounded-2xl border border-stone-800 hover:border-amber-500/40 transition">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4">
-              <Bot className="w-6 h-6" />
+      {/* --- PROMO VIDEO SECTION (LIVE FROM CMS) --- */}
+      {liveConfig?.isPromoVideoEnabled !== false && liveConfig?.promoVideoUrl && (
+        <section id="demo-video" className="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center space-y-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 text-xs font-bold uppercase tracking-wider">
+              <Film className="w-4 h-4 text-amber-400" />
+              <span>Video Demo Langsung</span>
             </div>
-            <h3 className="text-lg font-bold text-amber-200 mb-2">AI Voice & Natural Text POS Order</h3>
-            <p className="text-xs text-stone-400 leading-relaxed">
-              Kasir atau Waiter cukup mengetik atau menyebut pesanan lisan. Gemini AI otomatis mengurai menu, jumlah, porsi, catatan pedas, dan nomor saung.
+            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-amber-100">
+              {liveConfig.promoVideoTitle || "Lihat Cara Kerja SundaResto AI di Lapangan"}
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-400 max-w-2xl mx-auto">
+              Simak kemudahan operasional pelayan saung dan kasir saat menerima pesanan suara AI dalam hitungan detik.
             </p>
           </div>
 
-          <div className="bg-stone-900/60 p-6 rounded-2xl border border-stone-800 hover:border-amber-500/40 transition">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4">
-              <LayoutGrid className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-amber-200 mb-2">Peta Denah Saung Lesehan Real-time</h3>
-            <p className="text-xs text-stone-400 leading-relaxed">
-              Pantau status Saung 1-50 (Kosong, Masak, Minta Bill, Terisi, Booked). Dukung pendaftaran rombongan dan pindah saung instan.
-            </p>
+          <div className="relative aspect-video rounded-3xl overflow-hidden border-2 border-amber-500/30 bg-stone-900 shadow-2xl shadow-amber-500/10 max-w-4xl mx-auto">
+            <iframe
+              src={liveConfig.promoVideoUrl}
+              title={liveConfig.promoVideoTitle || "Promo Video"}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
           </div>
+        </section>
+      )}
 
-          <div className="bg-stone-900/60 p-6 rounded-2xl border border-stone-800 hover:border-amber-500/40 transition">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4">
-              <ChefHat className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-amber-200 mb-2">KDS Kitchen Display System</h3>
-            <p className="text-xs text-stone-400 leading-relaxed">
-              Layar Dapur & Bar realtime dipisah berdasarkan Stasiun (Dapur Bakar/Goreng, Tumis & Liwet, Bar Es). Timer durasi masak otomatis.
-            </p>
-          </div>
-
-          <div className="bg-stone-900/60 p-6 rounded-2xl border border-stone-800 hover:border-amber-500/40 transition">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4">
-              <Layers className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-amber-200 mb-2">Hitung HPP & Stok Bahan (BOM)</h3>
-            <p className="text-xs text-stone-400 leading-relaxed">
-              Setiap kali porsi Nasi Liwet / Gurame Bakar terjual, stok beras, ikan, dan cabai otomatis terpotong presisi beserta hitungan margin HPP.
-            </p>
-          </div>
-
-          <div className="bg-stone-900/60 p-6 rounded-2xl border border-stone-800 hover:border-amber-500/40 transition">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4">
-              <Receipt className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-amber-200 mb-2">Struk Thermal 80mm & QRIS Payment</h3>
-            <p className="text-xs text-stone-400 leading-relaxed">
-              Dukungan cetak struk kasir thermal, kalkulasi Pajak PB1 10%, Service Charge 5%, Split Bill, dan cetak QRIS dinamis.
-            </p>
-          </div>
-
-          <div className="bg-stone-900/60 p-6 rounded-2xl border border-stone-800 hover:border-amber-500/40 transition">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4">
-              <Store className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-amber-200 mb-2">Multi-Outlet & Multi-Cabang</h3>
-            <p className="text-xs text-stone-400 leading-relaxed">
-              Kelola cabang Dago Bandung, Bogor, Serpong, dan Jakarta dalam satu akun terpusat dengan laporan konsolidasi omset harian.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section with License Simulator */}
-      <section id="harga" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-stone-800/80">
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="text-xs uppercase tracking-widest text-amber-400 font-bold mb-2">Lisensi Software SundaResto AI</h2>
-          <p className="text-3xl font-serif font-bold text-amber-100">Beli Sekali atau Langganan Lisensi Siap Pakai</p>
-          <p className="mt-3 text-stone-400 text-sm">Pilih paket sesuai skala rumah makan Sunda Anda. Bisa dijual kembali oleh Software Reseller.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {/* Pro Plan */}
-          <div className="bg-stone-900 rounded-3xl p-8 border-2 border-amber-500 relative shadow-2xl flex flex-col justify-between">
-            <div className="absolute -top-4 right-6 bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
-              PALING POPULER
-            </div>
+      {/* --- DYNAMIC MEDIA GALLERY (FOTO SAUNG & KULINER) --- */}
+      {displayedMedia.length > 0 && (
+        <section id="galeri" className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 border-t border-stone-800/80">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
-              <h3 className="text-xl font-bold text-amber-200">SundaResto Pro</h3>
-              <p className="text-xs text-stone-400 mt-1">Ideal untuk Rumah Makan Saung Lesehan 1-3 Cabang</p>
-              <div className="mt-6 font-mono font-bold text-3xl text-amber-400">
-                {formatRupiah(2490000)} <span className="text-xs font-sans text-stone-400 font-normal">/ tahun / outlet</span>
-              </div>
-              <p className="text-[11px] text-emerald-400 mt-1">✓ Termasuk Lisensi Aktif `SUNDA-PRO-2026-X9A`</p>
+              <span className="text-xs uppercase tracking-widest text-amber-400 font-bold block mb-1">
+                Galeri Visual
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-serif font-bold text-amber-100">
+                Suasana Saung Asri & Kuliner Autentik
+              </h2>
+            </div>
 
-              <ul className="mt-6 space-y-3 text-xs text-stone-300 border-t border-stone-800 pt-6">
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> Hingga 3 Outlet Cabang</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> Hingga 50 Saung & Meja Lesehan</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> Full Voice AI POS Order Input</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> Layar Dapur KDS (Dapur & Bar)</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> Manajemen Stok Bahan & HPP (BOM)</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> Gemini AI Menu & Marketing Co-Pilot</li>
+            <div className="flex items-center gap-1.5 bg-stone-900 p-1 rounded-xl border border-stone-800 text-xs">
+              <button
+                onClick={() => setGalleryFilter("all")}
+                className={`px-3 py-1.5 rounded-lg transition font-semibold ${
+                  galleryFilter === "all" ? "bg-amber-500 text-stone-950 font-bold" : "text-stone-400 hover:text-stone-200"
+                }`}
+              >
+                Semua Foto
+              </button>
+              <button
+                onClick={() => setGalleryFilter("food")}
+                className={`px-3 py-1.5 rounded-lg transition font-semibold ${
+                  galleryFilter === "food" ? "bg-amber-500 text-stone-950 font-bold" : "text-stone-400 hover:text-stone-200"
+                }`}
+              >
+                Masakan Sunda
+              </button>
+              <button
+                onClick={() => setGalleryFilter("saung")}
+                className={`px-3 py-1.5 rounded-lg transition font-semibold ${
+                  galleryFilter === "saung" ? "bg-amber-500 text-stone-950 font-bold" : "text-stone-400 hover:text-stone-200"
+                }`}
+              >
+                Saung & Lesehan
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayedMedia.map((item) => (
+              <div
+                key={item.id}
+                className="bg-stone-900 rounded-2xl border border-stone-800 overflow-hidden group hover:border-amber-500/40 transition flex flex-col shadow-xl"
+              >
+                <div className="relative aspect-4/3 bg-stone-950 overflow-hidden">
+                  <img
+                    src={item.url}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                  />
+                  <span className="absolute top-3 left-3 px-2.5 py-1 bg-stone-950/80 backdrop-blur-md rounded-lg text-[10px] font-extrabold uppercase text-amber-300 border border-stone-800 shadow">
+                    {item.placement === "gallery_food" ? "Kuliner Pasundan" : "Saung Lesehan"}
+                  </span>
+                </div>
+
+                <div className="p-4 space-y-1">
+                  <h4 className="font-bold text-sm text-amber-100">{item.title}</h4>
+                  {item.caption && <p className="text-xs text-stone-400">{item.caption}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Pricing Section (Dynamic from CMS) */}
+      <section id="harga" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-stone-800/80 text-center">
+        <h2 className="text-xs uppercase tracking-widest text-amber-400 font-bold mb-2">Paket Lisensi Resto</h2>
+        <p className="text-3xl font-serif font-bold text-amber-100 mb-12">Pilih Paket Sesuai Kebutuhan Saung & Cabang</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto text-left">
+          {/* Starter Plan */}
+          <div className="bg-stone-900/80 border border-stone-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">Starter Lesehan</span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-bold font-mono text-stone-100">
+                  {formatRupiah(liveConfig?.pricingStarterMonthly || 149000)}
+                </span>
+                <span className="text-xs text-stone-400">/bulan</span>
+              </div>
+              <p className="text-xs text-stone-400">Cocok untuk 1 warung makan Sunda atau lesehan baru merintis.</p>
+
+              <ul className="space-y-2.5 text-xs text-stone-300 pt-4 border-t border-stone-800">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span>1 Outlet Kasir</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span>Maksimal 10 Saung / Meja</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span>POS Standard & Cetak Struk</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span>Inventori Bahan Dasar</span>
+                </li>
+              </ul>
+            </div>
+
+            <button
+              onClick={() => onQuickDemo("BASIC")}
+              className="w-full py-3 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold text-xs rounded-xl transition"
+            >
+              Coba Starter Demo
+            </button>
+          </div>
+
+          {/* Pro Plan (Best Value) */}
+          <div className="bg-gradient-to-b from-stone-900 via-stone-900 to-amber-950/40 border-2 border-amber-500/50 rounded-3xl p-6 sm:p-8 flex flex-col justify-between space-y-6 relative shadow-2xl shadow-amber-500/10">
+            <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-500 text-stone-950 text-[10px] font-extrabold uppercase px-3 py-1 rounded-full shadow">
+              Paling Populer
+            </span>
+
+            <div className="space-y-4">
+              <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Pro Multi-Saung</span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-bold font-mono text-amber-200">
+                  {formatRupiah(liveConfig?.pricingProMonthly || 299000)}
+                </span>
+                <span className="text-xs text-stone-400">/bulan</span>
+              </div>
+              <p className="text-xs text-stone-400">Ideal untuk Rumah Makan Saung Lesehan 10-50 Saung dengan KDS Dapur.</p>
+
+              <ul className="space-y-2.5 text-xs text-stone-200 pt-4 border-t border-stone-800">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-amber-400" />
+                  <span>Maksimal 3 Outlet / Cabang</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-amber-400" />
+                  <span>Hingga 50 Saung / Meja Lesehan</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-amber-400" />
+                  <span>AI Voice POS Order Terintegrasi</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-amber-400" />
+                  <span>KDS Layar Dapur & Bar Minuman</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-amber-400" />
+                  <span>Resep BOM & Hitung HPP Otomatis</span>
+                </li>
               </ul>
             </div>
 
             <button
               onClick={() => onQuickDemo("PRO")}
-              className="mt-8 w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-stone-950 font-bold rounded-xl shadow-lg transition"
+              className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-stone-950 font-bold text-xs rounded-xl shadow-lg transition"
             >
-              Aktifkan Lisensi Pro (Demo)
+              Coba Pro Demo Gratis
             </button>
           </div>
 
           {/* Enterprise Plan */}
-          <div className="bg-stone-900/80 rounded-3xl p-8 border border-stone-800 hover:border-stone-700 transition flex flex-col justify-between">
-            <div>
-              <h3 className="text-xl font-bold text-amber-100">SundaResto Enterprise</h3>
-              <p className="text-xs text-stone-400 mt-1">Untuk Grup Restoran & Waralaba Sunda Multi-Outlet</p>
-              <div className="mt-6 font-mono font-bold text-3xl text-stone-100">
-                {formatRupiah(5990000)} <span className="text-xs font-sans text-stone-400 font-normal">/ tahun</span>
+          <div className="bg-stone-900/80 border border-stone-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">Enterprise Franchise</span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-bold font-mono text-stone-100">
+                  {formatRupiah(liveConfig?.pricingEnterpriseMonthly || 799000)}
+                </span>
+                <span className="text-xs text-stone-400">/bulan</span>
               </div>
-              <p className="text-[11px] text-amber-400 mt-1">✓ Unlimited Outlet & Custom Brand Logo</p>
+              <p className="text-xs text-stone-400">Untuk grup restoran multi-cabang dengan ribuan transaksi harian.</p>
 
-              <ul className="mt-6 space-y-3 text-xs text-stone-300 border-t border-stone-800 pt-6">
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400" /> Unlimited Outlet & Saung Lesehan</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400" /> Fitur Reseller License Generator</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400" /> Smart Stock Forecasting AI</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400" /> Laporan Konsolidasi Holding Group</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-400" /> Priority Support 24/7 Indonesia</li>
+              <ul className="space-y-2.5 text-xs text-stone-300 pt-4 border-t border-stone-800">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-purple-400" />
+                  <span>Unlimited Outlet & Saung</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-purple-400" />
+                  <span>Full AI Executive & Marketing Pilot</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-purple-400" />
+                  <span>Transfer Stok Antar Gudang Cabang</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-purple-400" />
+                  <span>Custom Branding & Thermal Logo</span>
+                </li>
               </ul>
             </div>
 
             <button
               onClick={() => onQuickDemo("ENTERPRISE")}
-              className="mt-8 w-full py-3.5 bg-stone-800 hover:bg-stone-700 text-amber-200 font-bold rounded-xl border border-amber-500/30 transition"
+              className="w-full py-3 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold text-xs rounded-xl transition"
             >
-              Aktifkan Lisensi Enterprise
+              Coba Enterprise Demo
             </button>
           </div>
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section id="faq" className="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-stone-800/80">
-        <div className="text-center mb-12">
-          <h2 className="text-xs uppercase tracking-widest text-amber-400 font-bold mb-2">Frequently Asked Questions</h2>
-          <p className="text-3xl font-serif font-bold text-amber-100">Pertanyaan Umum Seputar SundaResto AI</p>
-        </div>
-
-        <div className="space-y-4 text-left">
-          <div className="bg-stone-900 p-5 rounded-2xl border border-stone-800">
-            <h4 className="font-bold text-amber-200 text-sm">Apakah SundaResto AI mendukung printer kasir thermal & cetak dapur?</h4>
-            <p className="text-xs text-stone-300 mt-2 leading-relaxed">
-              Ya, aplikasi mendukung semua jenis printer thermal Bluetooth, USB, maupun Ethernet LAN untuk cetak struk kasir, dapur (KDS), dan cetak checker saung.
+      {/* Contact & Footer Section (Dynamic from CMS) */}
+      <footer className="py-12 border-t border-stone-800 text-xs text-stone-400 bg-stone-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8 mb-8 text-left">
+          <div className="space-y-2">
+            <h4 className="font-serif font-bold text-amber-200 text-sm">
+              {liveConfig?.appName || "SundaResto AI"}
+            </h4>
+            <p className="text-stone-400 text-xs leading-relaxed">
+              {liveConfig?.appTagline || "Sistem Operasional Digital Rumah Makan Sunda & Saung Lesehan Pertama di Indonesia."}
             </p>
           </div>
 
-          <div className="bg-stone-900 p-5 rounded-2xl border border-stone-800">
-            <h4 className="font-bold text-amber-200 text-sm">Bagaimana sistem menghitung HPP & stok bahan baku (BOM)?</h4>
-            <p className="text-xs text-stone-300 mt-2 leading-relaxed">
-              Setiap kali menu (seperti Ayam Bakar atau Gurame Terbang) terjual di POS, sistem otomatis mengurangi stok bahan mentah (ayam, beras, cabai, minyak) secara presisi sesuai resep BOM.
-            </p>
-          </div>
-
-          <div className="bg-stone-900 p-5 rounded-2xl border border-stone-800">
-            <h4 className="font-bold text-amber-200 text-sm">Apakah bisa digunakan jika koneksi internet terputus (Offline mode)?</h4>
-            <p className="text-xs text-stone-300 mt-2 leading-relaxed">
-              SundaResto AI memiliki sistem offline-first untuk transaksi kasir di local device, dan otomatis tersinkronisasi kembali ke cloud saat koneksi internet kembali terhubung.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section id="testimoni" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-stone-800/80 text-center">
-        <h2 className="text-xs uppercase tracking-widest text-amber-400 font-bold mb-2">Testimoni Pengusaha Kuliner Sunda</h2>
-        <p className="text-3xl font-serif font-bold text-amber-100 mb-12">Dipercaya oleh Pemilik Rumah Makan & Saung Lesehan</p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-          <div className="bg-stone-900 p-6 rounded-2xl border border-stone-800 space-y-4">
-            <div className="flex items-center gap-1 text-amber-400">
-              {"★".repeat(5)}
-            </div>
-            <p className="text-xs text-stone-300 italic leading-relaxed">
-              "Aplikasi SundaResto AI sangat membantu waktu jam sibuk makan siang di 12 saung lesehan kami. Fitur AI voice order bikin waiter gak salah catat pesanan Gurame & Liwet lagi!"
-            </p>
-            <div>
-              <h4 className="font-bold text-amber-200 text-sm">H. Maman Sulaeman</h4>
-              <p className="text-[10px] text-stone-400">Owner RM Saung Pasundan Dago</p>
+          <div className="space-y-2">
+            <h4 className="font-serif font-bold text-amber-200 text-sm">Kontak & Dukungan Pengembang</h4>
+            <div className="space-y-1 text-xs">
+              <div className="flex items-center gap-2">
+                <Phone className="w-3.5 h-3.5 text-amber-400" />
+                <span>WhatsApp: {liveConfig?.contactWhatsapp || "0812-8888-9900"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail className="w-3.5 h-3.5 text-amber-400" />
+                <span>Email: {liveConfig?.contactEmail || "developer@sundaresto.ai"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="w-3.5 h-3.5 text-amber-400" />
+                <span>{liveConfig?.restaurantAddress || "Jl. Raya Parahyangan No. 128, Bandung"}</span>
+              </div>
             </div>
           </div>
 
-          <div className="bg-stone-900 p-6 rounded-2xl border border-stone-800 space-y-4">
-            <div className="flex items-center gap-1 text-amber-400">
-              {"★".repeat(5)}
-            </div>
-            <p className="text-xs text-stone-300 italic leading-relaxed">
-              "Sistem HPP BOM nya juara banget! Kami bisa langsung tau sisa stok ikan gurame hidup dan beras cianjur tiap kali ada pembayaran di kasir."
+          <div className="space-y-2">
+            <h4 className="font-serif font-bold text-amber-200 text-sm">Akses Pengembang / Owner</h4>
+            <p className="text-xs text-stone-400">
+              Kelola user, CMS website, API key, dan media tanpa perlu redeploy.
             </p>
-            <div>
-              <h4 className="font-bold text-amber-200 text-sm">Ibu Hj. Neng Yulia</h4>
-              <p className="text-[10px] text-stone-400">Pengelola Lesehan Gurame Bogor</p>
-            </div>
-          </div>
-
-          <div className="bg-stone-900 p-6 rounded-2xl border border-stone-800 space-y-4">
-            <div className="flex items-center gap-1 text-amber-400">
-              {"★".repeat(5)}
-            </div>
-            <p className="text-xs text-stone-300 italic leading-relaxed">
-              "Fitur AI Marketing Co-Pilot nya sangat praktis. Kita tinggal klik langsung jadi caption Instagram dan broadcast promo WA Bahasa Sunda yang menarik!"
-            </p>
-            <div>
-              <h4 className="font-bold text-amber-200 text-sm">Kang Dadang Ramlan</h4>
-              <p className="text-[10px] text-stone-400">Manager Operasional Nasi Liwet Priangan</p>
-            </div>
+            {onOpenDeveloperControlPanel && (
+              <button
+                onClick={onOpenDeveloperControlPanel}
+                className="mt-2 px-3 py-1.5 bg-stone-900 hover:bg-stone-800 border border-amber-500/30 text-amber-300 rounded-lg text-xs font-bold flex items-center gap-1.5 transition"
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>Buka Master Control Panel</span>
+              </button>
+            )}
           </div>
         </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="py-8 border-t border-stone-800 text-center text-xs text-stone-500">
-        <p>© 2026 SundaResto AI. Hak Cipta Dilindungi Undang-Undang. Solusi Software Kuliner Indonesia.</p>
-        <p className="mt-1 text-[11px] text-amber-500/60">Pengembangan AI Studio | Model: Gemini 3.6 Flash</p>
+        <div className="border-t border-stone-800/80 pt-6 text-center text-[11px] text-stone-500">
+          <p>{liveConfig?.footerCopyright || "© 2026 SundaResto AI. Hak Cipta Dilindungi Undang-Undang."}</p>
+        </div>
       </footer>
     </div>
   );

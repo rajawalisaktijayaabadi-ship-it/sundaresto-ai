@@ -30,7 +30,8 @@ import {
   ShoppingBag,
   Crown,
   CheckCircle2,
-  Lock
+  Lock,
+  Sliders
 } from "lucide-react";
 import { LicenseInfo, Outlet } from "../types";
 import { RBAC_ROLES, RbacRole, isTabAllowedForRole, getDefaultTabForRole } from "../utils/rbac";
@@ -51,7 +52,8 @@ export type ActiveTab =
   | "aipilot"
   | "reports"
   | "license"
-  | "settings";
+  | "settings"
+  | "control_panel";
 
 interface HeaderNavProps {
   license: LicenseInfo;
@@ -124,7 +126,8 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
     { id: "outlet", label: "Multi-Outlet Branch", icon: Building2 },
     { id: "reservation", label: "Reservasi Saung", icon: Calendar },
     { id: "employee", label: "Karyawan & Akses POS", icon: Users },
-    { id: "license", label: "Kelola Lisensi Software", icon: KeyRound }
+    { id: "license", label: "Kelola Lisensi Software", icon: KeyRound },
+    { id: "control_panel", label: "Developer Control Panel & CRM", icon: Sliders }
   ].filter((item) => isTabAllowedForRole(activeRole, item.id as ActiveTab));
 
   const handleMobileNavClick = (tabId: string) => {

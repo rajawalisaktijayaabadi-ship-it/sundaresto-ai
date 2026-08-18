@@ -70,11 +70,13 @@ import { LicenseModule } from "./components/LicenseModule";
 import { SettingsModule } from "./components/SettingsModule";
 import { ExecutiveDashboard } from "./components/ExecutiveDashboard";
 import { ReceiptModal } from "./components/ReceiptModal";
+import { DeveloperControlPanelModule } from "./components/DeveloperControlPanelModule";
 
 export default function App() {
   const [viewMode, setViewMode] = useState<"landing" | "app">("landing");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
+  const [isControlPanelOpen, setIsControlPanelOpen] = useState(false);
 
   // Application Global State
   const [license, setLicense] = useState<LicenseInfo>(INITIAL_LICENSE);
@@ -803,6 +805,7 @@ export default function App() {
         <LandingPage
           onOpenLogin={() => setIsAuthModalOpen(true)}
           onQuickDemo={handleQuickDemo}
+          onOpenDeveloperControlPanel={() => setIsControlPanelOpen(true)}
         />
       ) : (
         /* 2. Main App Application View */
@@ -1009,8 +1012,51 @@ export default function App() {
                 onUpdateOutlet={handleUpdateOutlet}
               />
             )}
+
+            {activeTab === "control_panel" && (
+              <DeveloperControlPanelModule
+                onApplyClientLicense={(client) => {
+                  setLicense({
+                    key: client.licenseKey,
+                    tier: client.licenseTier,
+                    tierName: client.restaurantName + " (" + client.licenseTier + ")",
+                    outletLimit: client.maxOutlets,
+                    saungLimit: client.maxSaungs,
+                    features: client.features,
+                    expiresAt: client.expiresAt,
+                    isActive: client.status === "ACTIVE",
+                    registeredTo: client.ownerName
+                  });
+                  setActiveTab("dashboard");
+                }}
+              />
+            )}
           </div>
         </HeaderNav>
+      )}
+
+      {/* Developer Control Panel & CRM Full Modal */}
+      {isControlPanelOpen && (
+        <DeveloperControlPanelModule
+          isOpen={isControlPanelOpen}
+          onClose={() => setIsControlPanelOpen(false)}
+          onApplyClientLicense={(client) => {
+            setLicense({
+              key: client.licenseKey,
+              tier: client.licenseTier,
+              tierName: client.restaurantName + " (" + client.licenseTier + ")",
+              outletLimit: client.maxOutlets,
+              saungLimit: client.maxSaungs,
+              features: client.features,
+              expiresAt: client.expiresAt,
+              isActive: client.status === "ACTIVE",
+              registeredTo: client.ownerName
+            });
+            setIsControlPanelOpen(false);
+            setViewMode("app");
+            setActiveTab("dashboard");
+          }}
+        />
       )}
 
       {/* Global Modals */}

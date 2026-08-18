@@ -8,7 +8,7 @@ export async function testGeminiApiKeyClient(apiKey: string): Promise<{ success:
 
   try {
     const ai = new GoogleGenAI({ apiKey: cleanKey });
-    const modelsToTry = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-flash-lite"];
+    const modelsToTry = ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.1-flash-lite", "gemini-flash-latest"];
     let lastErr: any = null;
 
     for (const model of modelsToTry) {
@@ -75,7 +75,7 @@ export async function generateCopilotClient(mode: string, prompt: string, contex
   }
 
   const ai = new GoogleGenAI({ apiKey: cleanKey });
-  const modelsToTry = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-flash-lite"];
+  const modelsToTry = ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.1-flash-lite", "gemini-flash-latest"];
 
   const systemInstruction = `Anda adalah SundaResto AI Co-Pilot untuk Restoran Saung Pasundan.
 Tugas Anda adalah merespon dalam format JSON valid sesuai mode '${mode}'.
@@ -751,7 +751,7 @@ Kembalikan HANYA JSON valid dengan format:
   "pairingRecommendation": "Rekomendasi minuman/pencuci mulut"
 }`;
 
-  const modelsToTry = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-flash-lite"];
+  const modelsToTry = ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.1-flash-lite", "gemini-flash-latest"];
   for (const model of modelsToTry) {
     try {
       const response = await ai.models.generateContent({

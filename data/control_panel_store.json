@@ -1,0 +1,146 @@
+{
+  "websiteConfig": {
+    "appName": "SundaResto AI",
+    "appTagline": "Smart POS & Resto Operating System Khas Pasundan",
+    "heroHeadline": "Kelola Rumah Makan Sunda Lebih",
+    "heroHighlightText": "Mewah, Cerdas & Cepat",
+    "heroDescription": "Platform POS terintegrasi khusus kuliner Pasundan: Order Suara AI, Manajemen Saung Lesehan Real-time, KDS Dapur, Hitung HPP & Stok Bahan (BOM), serta AI Marketing Consultant.",
+    "heroBadgeText": "Aplikasi Smart AI Pertama Khusus Rumah Makan Sunda & Saung Lesehan",
+    "topAnnouncementText": "SundaResto AI v2.5 - Terintegrasi Google Gemini AI, Support Voice POS & Multi-Saung Realtime!",
+    "isAnnouncementActive": true,
+    "promoVideoUrl": "https://www.youtube-nocookie.com/embed/ScMzIvxBSi4",
+    "promoVideoTitle": "Video Tour & Demo Operasional SundaResto AI",
+    "isPromoVideoEnabled": true,
+    "heroBannerImageUrl": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80",
+    "contactWhatsapp": "0812-8888-9900",
+    "contactEmail": "developer@sundaresto.ai",
+    "restaurantAddress": "Jl. Raya Parahyangan No. 128, Bandung, Jawa Barat",
+    "footerCopyright": "© 2026 SundaResto AI. Dedicated for Indonesian Culinary Excellence.",
+    "pricingStarterMonthly": 149000,
+    "pricingProMonthly": 299000,
+    "pricingEnterpriseMonthly": 799000,
+    "customMetaTitle": "SundaResto AI - Smart Operating System RM Sunda & Saung Lesehan",
+    "customMetaDescription": "Aplikasi POS & Manajemen Restoran Sunda paling modern dengan AI Co-Pilot dan Multi-Saung.",
+    "featuredMedia": [
+      {
+        "id": "media-1",
+        "type": "image",
+        "title": "Nasi Liwet Kastrol Spesial",
+        "url": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
+        "caption": "Penyajian kastrol tradisional beralas daun pisang segar",
+        "placement": "gallery_food",
+        "isActive": true,
+        "createdAt": "2026-08-10"
+      },
+      {
+        "id": "media-2",
+        "type": "image",
+        "title": "Gurame Bakar Sambal Dadak",
+        "url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80",
+        "caption": "Ikan gurame segar dibakar arang bumbu rempah",
+        "placement": "gallery_food",
+        "isActive": true,
+        "createdAt": "2026-08-10"
+      },
+      {
+        "id": "media-3",
+        "type": "image",
+        "title": "Suasana Saung Lesehan Kolam Ikan",
+        "url": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+        "caption": "Saung bambu asri di atas kolam ikan air mengalir",
+        "placement": "gallery_saung",
+        "isActive": true,
+        "createdAt": "2026-08-10"
+      },
+      {
+        "id": "media-4",
+        "type": "video",
+        "title": "Tour Saung & Live POS Kitchen",
+        "url": "https://www.youtube-nocookie.com/embed/ScMzIvxBSi4",
+        "caption": "Demo langsung integrasi POS kasir dan KDS dapur saung",
+        "placement": "promo_video",
+        "isActive": true,
+        "createdAt": "2026-08-10"
+      }
+    ],
+    "updatedAt": "2026-08-17T19:00:00.000Z"
+  },
+  "clients": [
+    {
+      "id": "client-1",
+      "clientName": "Bpk. Rahmat Suryana",
+      "businessName": "RM Saung Pasundan Utama",
+      "email": "owner@saungpasundan.com",
+      "phone": "0812-9988-7766",
+      "passwordPin": "123456",
+      "tier": "PRO",
+      "licenseKey": "SUNDA-PRO-2026-X9A",
+      "isActive": true,
+      "maxOutlets": 3,
+      "maxSaung": 50,
+      "expiryDate": "2027-12-31",
+      "createdAt": "2026-01-15",
+      "lastLoginAt": "2026-08-17 18:30",
+      "notes": "Pelanggan VIP cabang Bandung & Lembang",
+      "customFeatures": ["AI Voice POS Order", "Realtime Saung Grid", "KDS Kitchen & Bar", "Inventory BOM", "AI Co-Pilot"]
+    },
+    {
+      "id": "client-2",
+      "clientName": "Ibu Hj. Dewi Sartika",
+      "businessName": "Grup Resto Sunda Nusantara",
+      "email": "dewi@sundanantara.co.id",
+      "phone": "0811-2233-4455",
+      "passwordPin": "888888",
+      "tier": "ENTERPRISE",
+      "licenseKey": "SUNDA-ENT-MULTI-888",
+      "isActive": true,
+      "maxOutlets": 99,
+      "maxSaung": 999,
+      "expiryDate": "2028-12-31",
+      "createdAt": "2026-02-01",
+      "lastLoginAt": "2026-08-17 15:45",
+      "notes": "Franchise 12 outlet Jabodetabek & Jawa Barat",
+      "customFeatures": ["Unlimited Outlets", "AI Smart Chef", "Predictive Inventory", "Full Financial AI", "Custom Receipt & Loyalty"]
+    },
+    {
+      "id": "client-3",
+      "clientName": "Kang Asep Kurniawan",
+      "businessName": "Warung Lesehan Cihampelas",
+      "email": "asep@warungcihampelas.id",
+      "phone": "0857-1122-3344",
+      "passwordPin": "112233",
+      "tier": "BASIC",
+      "licenseKey": "SUNDA-BASIC-101",
+      "isActive": true,
+      "maxOutlets": 1,
+      "maxSaung": 10,
+      "expiryDate": "2026-12-31",
+      "createdAt": "2026-03-10",
+      "lastLoginAt": "2026-08-16 12:20",
+      "notes": "Paket Starter Lesehan 1 Outlet",
+      "customFeatures": ["POS Kasir Standard", "Digital Saung Grid", "Basic Inventory"]
+    }
+  ],
+  "apiConfig": {
+    "masterGeminiApiKey": "",
+    "fallbackGeminiApiKey": "",
+    "defaultAiModel": "gemini-3.7-flash",
+    "aiTemperature": 0.7,
+    "enableUserCustomApiKey": true,
+    "systemPromptModifier": "Anda adalah Co-Pilot AI Resmi SundaResto. Berikan saran bisnis saung lesehan Sunda yang strategis, ramah, dan solutif.",
+    "updatedAt": "2026-08-17T19:00:00.000Z"
+  },
+  "broadcasts": [
+    {
+      "id": "bc-1",
+      "title": "🎉 Fitur Baru: AI Smart Chef & Audio POS v2.5!",
+      "message": "Sistem SundaResto kini dilengkapi pembuatan Resep Otomatis & Analisis HPP cerdas berbasis Google Gemini AI.",
+      "type": "info",
+      "targetTiers": ["ALL"],
+      "isActive": true,
+      "createdAt": "2026-08-17T18:00:00.000Z"
+    }
+  ],
+  "developerMasterPin": "889900",
+  "serverVersion": "v2.5.0-production"
+}

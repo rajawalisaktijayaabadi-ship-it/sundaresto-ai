@@ -33,7 +33,8 @@ export const RBAC_ROLES: Record<RbacRole, RoleDefinition> = {
       "aipilot",
       "reports",
       "license",
-      "settings"
+      "settings",
+      "control_panel"
     ],
     permissionsList: ["Super Admin Root", "Developer Console", "Gemini API Key Config", "All Outlets Access", "System Logs"]
   },

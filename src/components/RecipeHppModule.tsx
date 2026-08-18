@@ -119,23 +119,39 @@ export const RecipeHppModule: React.FC<RecipeHppModuleProps> = ({
       if (response.ok && contentType.includes("application/json")) {
         const data = await response.json();
         if (data.success && data.data) {
-          setGeneratedRecipe(normalizeSundaRecipeData(data.data, promptToUse, targetServings));
+          const norm = normalizeSundaRecipeData(data.data, promptToUse, targetServings);
+          setGeneratedRecipe(norm);
+          if (norm?.recipeTitle) {
+            setRecipePrompt(norm.recipeTitle);
+          }
           return;
         }
       }
 
       // Fallback to client Gemini direct call or smart local fallback
       const clientData = await generateSundaRecipeClient(promptToUse, targetServings, savedKey);
-      setGeneratedRecipe(normalizeSundaRecipeData(clientData, promptToUse, targetServings));
+      const norm = normalizeSundaRecipeData(clientData, promptToUse, targetServings);
+      setGeneratedRecipe(norm);
+      if (norm?.recipeTitle) {
+        setRecipePrompt(norm.recipeTitle);
+      }
     } catch (err) {
       console.error("Recipe API error, attempting direct client fallback...", err);
       const savedKey = localStorage.getItem("custom_gemini_api_key") || "";
       try {
         const clientData = await generateSundaRecipeClient(promptToUse, targetServings, savedKey);
-        setGeneratedRecipe(normalizeSundaRecipeData(clientData, promptToUse, targetServings));
+        const norm = normalizeSundaRecipeData(clientData, promptToUse, targetServings);
+        setGeneratedRecipe(norm);
+        if (norm?.recipeTitle) {
+          setRecipePrompt(norm.recipeTitle);
+        }
       } catch (clientErr) {
         console.error("Client fallback error:", clientErr);
-        setGeneratedRecipe(normalizeSundaRecipeData(null, promptToUse, targetServings));
+        const norm = normalizeSundaRecipeData(null, promptToUse, targetServings);
+        setGeneratedRecipe(norm);
+        if (norm?.recipeTitle) {
+          setRecipePrompt(norm.recipeTitle);
+        }
       }
     } finally {
       setIsGeneratingRecipe(false);
@@ -854,7 +870,20 @@ export const RecipeHppModule: React.FC<RecipeHppModuleProps> = ({
 
               {/* Quick Preset Buttons */}
               <div className="space-y-1.5 pt-1">
-                <span className="text-[10px] text-stone-400 font-semibold block">Pilihan Cepat Masakan Sunda Favorit:</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-stone-400 font-semibold block">Pilihan Cepat Masakan Sunda Favorit:</span>
+                  <button
+                    onClick={() => {
+                      setRecipePrompt("minta ide");
+                      handleGenerateSundaRecipe("minta ide");
+                    }}
+                    disabled={isGeneratingRecipe}
+                    className="text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-2.5 py-0.5 rounded-lg transition"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>🎲 Acak Ide Menu Sunda Baru</span>
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-1.5">
                   {quickSundaPrompts.map((prompt) => (
                     <button
